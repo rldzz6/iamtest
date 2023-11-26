@@ -37,7 +37,7 @@ def make_entity_colums(model:BaseModel):
 #model에 해당 key값이 빈값인지 체크
 def is_value(key:str, model:BaseModel):
     model = model.dict(exclude_unset=True)
-    if (key in model) and (not model.get(key)):
+    if (key in model) or (not model.get(key)):
         return False
     else:
         return True
