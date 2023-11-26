@@ -39,7 +39,7 @@ async def insert_service(model: RequestDTO.Service):
         result_data = sql.insert_service(db_conn, model)
 
         if result_data == 0:
-            raise Exception('서비스를 저장하는데 실패했습니다.')
+            raise Exception('서비스를 생성하는데 실패했습니다.')
 
         return Response(
             Result='OK',

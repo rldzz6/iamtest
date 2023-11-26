@@ -43,7 +43,7 @@ async def insert_resource(model: RequestDTO.Resource):
         if result_data.resource_id :
             return select_resource(model=RequestDTO.Resource(resource_id=str(result_data.resource_id))) 
         else:
-            raise Exception('리소스를 저장하는데 실패했습니다.')
+            raise Exception('리소스를 생성하는데 실패했습니다.')
 
     except Exception as err_msg:
         return Response(

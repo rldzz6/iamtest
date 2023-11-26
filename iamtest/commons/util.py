@@ -18,8 +18,8 @@ def make_insert_query(table:str, model:BaseModel):
         if not columns or not values:
             raise Exception('쿼리문 생성 오류')
         
-        result = ' INSERT ' + table
-        result += ' ( ' + columns + ' ) '
+        result = ' INSERT `' + table
+        result += '` ( ' + columns + ' ) '
         result += 'VALUES (' + values + ' ); '
     except Exception as err_msg:
         raise Exception(err_msg)

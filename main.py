@@ -3,12 +3,14 @@ from fastapi import FastAPI
 from mangum import Mangum
 from iamtest.routers.services import service
 from iamtest.routers.resources import resource
+from iamtest.routers.groups import group
 
 app = FastAPI()
 
 #라우터 정의
 app.include_router(service.router, prefix="/service", tags=["service"])
 app.include_router(resource.router, prefix="/resource", tags=["resource"])
+app.include_router(group.router, prefix="/group", tags=["group"])
 
 #테스트 코드
 @app.get('/')
