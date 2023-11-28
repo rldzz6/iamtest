@@ -11,9 +11,13 @@ import iamtest.models.querys.service as sql
 router = APIRouter()
 db_conn = config.db_connection()
 
-@router.get('/list/', response_model=Response)
-def select_service(model: RequestDTO.Service | None = None):
+@router.get('/list', response_model=Response)
+def select_service(service_id: int | None = None, search: str | None = None):
     try:
+        model = RequestDTO.Service()
+        model.service_id = service_id
+        model.search = search
+
         result_data = sql.select_service(db_conn, model)
         
         return Response(
@@ -56,7 +60,7 @@ async def insert_service(model: RequestDTO.Service):
         )
 
 @router.patch('/update/{service_id}', response_model=Response)
-async def update_service(service_id:str, model: RequestDTO.Service):
+async def update_service(service_id:int, model: RequestDTO.Service):
     try:
         if not service_id:
             raise Exception('서비스를 찾을 수 없습니다.')
@@ -67,7 +71,7 @@ async def update_service(service_id:str, model: RequestDTO.Service):
 
         #update완료된 경우
         if result_data != 0:
-            return select_service(model=RequestDTO.Service(service_id=service_id))
+            return select_service(service_id=service_id)
 
         return Response(
             Result='OK',
@@ -84,7 +88,7 @@ async def update_service(service_id:str, model: RequestDTO.Service):
         )
 
 @router.delete('/delete/{service_id}', response_model=Response)
-async def delete_service(service_id:str):
+async def delete_service(service_id:int):
     try:
         if not service_id:
             raise Exception('서비스를 찾을 수 없습니다.')

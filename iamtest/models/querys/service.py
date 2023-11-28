@@ -61,6 +61,8 @@ def delete_service(conn, target_id):
         query = '''
             DELETE FROM service WHERE service_id = ?service_id?;
         '''
+        #TODO : 서비스 하위 리소스 및 권한 삭제
+        
         result = conn.execute(query, param={'service_id': target_id})
         conn.connection.commit()
     except Exception as Err:

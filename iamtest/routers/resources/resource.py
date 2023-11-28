@@ -12,8 +12,13 @@ router = APIRouter()
 db_conn = config.db_connection()
 
 @router.get('/list', response_model=Response)
-def select_resource(model: RequestDTO.Resource | None = None):
+def select_resource(resource_id: int | None = None, service_id: int | None = None, name: str | None = None, search: str | None = None):
     try:
+        model = RequestDTO.Resource()
+        model.resource_id = resource_id
+        model.service_id = service_id
+        model.name = name
+        model.search = search
         result_data = sql.select_resource(db_conn, model)
         
         return Response(
@@ -30,7 +35,7 @@ def select_resource(model: RequestDTO.Resource | None = None):
             Data=[]
         )
 
-@router.post('/save/', response_model=Response)
+@router.post('/save', response_model=Response)
 async def insert_resource(model: RequestDTO.Resource):
     try:
         if not util.is_value('service_id', model):
@@ -54,18 +59,20 @@ async def insert_resource(model: RequestDTO.Resource):
         )
 
 @router.patch('/update/{resource_id}', response_model=Response)
-async def update_service(resource_id:str, model: RequestDTO.Resource):
+async def update_service(resource_id:int, model: RequestDTO.Resource):
     try:
         if not resource_id:
             raise Exception('리소스를 찾을 수 없습니다.')
         if not util.is_value('name', model):
             raise Exception('리소스명을 입력하세요.')
-    
+        if not util.is_value('service_id', model):
+            raise Exception('서비스를 찾을 수 없습니다.')
+        print(model)
         result_data = sql.update_resource(db_conn, resource_id, model)
 
         #update완료된 경우
         if result_data != 0:
-            return select_resource(model=RequestDTO.Resource(resource_id=resource_id))
+            return select_resource(resource_id=resource_id)
 
         return Response(
             Result='OK',
@@ -82,7 +89,7 @@ async def update_service(resource_id:str, model: RequestDTO.Resource):
         )
 
 @router.delete('/delete/{resource_id}', response_model=Response)
-async def delete_resource(resource_id:str):
+async def delete_resource(resource_id:int):
     try:
         if not resource_id:
             raise Exception('리소스를 찾을 수 없습니다.')

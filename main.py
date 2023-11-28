@@ -1,8 +1,11 @@
 #FastAPI 앱 인스턴스 생성 및 실행, 로깅 실행, db 세션 생성
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from mangum import Mangum
+from iamtest.models.entity.model import Response
 from iamtest.routers.services import service
 from iamtest.routers.resources import resource
+from iamtest.routers.permissions import permission
 from iamtest.routers.groups import group
 
 app = FastAPI()
@@ -10,7 +13,14 @@ app = FastAPI()
 #라우터 정의
 app.include_router(service.router, prefix="/service", tags=["service"])
 app.include_router(resource.router, prefix="/resource", tags=["resource"])
+app.include_router(permission.router, prefix="/permission", tags=["permission"])
 app.include_router(group.router, prefix="/group", tags=["group"])
+
+@app.exception_handler(Exception)
+async def value_error_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(
+            content=str(exc)
+        )
 
 #테스트 코드
 @app.get('/')

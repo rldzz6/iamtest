@@ -10,8 +10,11 @@ db_conn = config.db_connection()
 
 #권한그룹 목록 조회
 @router.get('/list', response_model=Response)
-def select_group(model: RequestDTO.Group | None = None):
+def select_group(group_id: int | None = None, search: str | None = None):
     try:
+        model = RequestDTO.Group()
+        model.group_id = group_id
+        model.search = search
         result_data = sql.select_group(db_conn, model)
         
         return Response(
@@ -38,7 +41,7 @@ async def insert_group(model: RequestDTO.Group):
         result_data = sql.insert_group(db_conn, model)
 
         if result_data.group_id :
-            return select_group(model=RequestDTO.Group(group_id=str(result_data.group_id))) 
+            return select_group(group_id=str(result_data.group_id))
         else:
             raise Exception('권한그룹을 생성하는데 실패했습니다.')
 
