@@ -1,6 +1,7 @@
 #공통함수
 from pydantic import BaseModel
 
+#INSERT문 쿼리 생성
 def make_insert_query(table:str, model:BaseModel):
     try:
         model = model.dict(exclude_unset=True, exclude_none=True)
@@ -25,11 +26,11 @@ def make_insert_query(table:str, model:BaseModel):
         raise Exception(err_msg)
     return result
 
-#select문 where옵션 생성
+#SELECT문 WHERE 옵션 생성
 def make_search_option(model, search_options):
     if model:
         model = model.dict(exclude_unset=True, exclude_none=True)
-
+        print(model)
         entity_colums = ''
         option_colums = ''
         try:
@@ -56,7 +57,7 @@ def make_search_option(model, search_options):
     else:
         return ''
 
-#update문 set옵션 생성
+#UPDATE문 SET옵션 생성
 def make_entity_colums(model:BaseModel):
     model = model.dict(exclude_unset=True, exclude_none=True)
     entity_colums = ''
@@ -71,7 +72,9 @@ def make_entity_colums(model:BaseModel):
 #model에 해당 key값이 빈값인지 체크
 def is_value(key:str, model:BaseModel):
     model = model.dict(exclude_unset=True, exclude_none=True)
-    if (key in model) and (not model.get(key)):
+    if not model:
+        return False
+    elif (key in model) and (not model.get(key)):
         return False
     else:
         return True

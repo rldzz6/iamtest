@@ -3,7 +3,7 @@ from typing import Dict, Any
 
 class Group(BaseModel):
     group_id: str | None = None
-    group_name: str | None = ''
+    group_name: str | None = None
     remark: str | None = None
     search: str | None = None
     

@@ -1,8 +1,11 @@
 from io import StringIO
 from iamtest.models.entity import permission
 from iamtest.commons import util
+import iamtest.commons.config as config
 
-def select_permission(conn, data):
+def select_permission(data):
+    db = config.db_connection()
+    search_option = util.make_search_option(data, ['group_name', 'remark'])
     try:
         query = f'''
             SELECT
@@ -14,64 +17,72 @@ def select_permission(conn, data):
                 , remark
             FROM
                 permission
-            {util.make_search_option(data, ['permission_name', 'remark'])} ;
-        '''
-        
-        result = conn.query(query, param=data, model=permission.Permission)
-        conn.connection.commit()
-    except Exception as Err:
-        print(Err)
-        conn.connection.rollback()
-    return result
+        ''' 
+        query += search_option + ';'      
+
+        print(query)
+        if search_option != '':
+            result = db.query(query, param=data, model=permission.Permission)
+        else:
+            result = db.query(query, model=permission.Permission)
+        db.connection.commit()
+        return result
+    except Exception as error_msg:
+        db.connection.rollback()
+        raise(error_msg)
 
 
-def insert_permission(conn, data):
+def insert_permission(data):
+    db = config.db_connection()
     try:
-        insert_query  = util.make_insert_query('permission', data)
-        select_query = ' SELECT @@IDENTITY AS permission_id; '
+        insert_query = util.make_insert_query('permission', data)
+        select_query = 'SELECT @@IDENTITY AS permission_id;'
 
-        conn.execute(insert_query, param=data)
-        result = conn.query(select_query, param=data, model=permission.Permission)[0]
-        conn.connection.commit()
-    except Exception as Err:
-        conn.connection.rollback()
-        print("**********SQL EXECUTE ERROR********")
-        print(Err)
-    return result
+        db.execute(insert_query, param=data)
+        result = db.query_first(select_query, param=data, model=permission.Permission)
+
+        db.connection.commit()
+        return result
+    except Exception as error_msg:
+        db.connection.rollback()
+        raise(error_msg)
 
 
-def update_permission(conn, target_id, data):
-    values = util.make_entity_colums(data)
+def update_permission(target_id, data):
+    db = config.db_connection()
+    
+    update_values = util.make_entity_colums(data)
     try:
         query = f'''
             UPDATE
                 permission
             SET 
-                {values}
+                {update_values}
             WHERE
                 permission_id = {target_id};
         '''
-        
-        result = conn.execute(query, param=data)
-        conn.connection.commit()
-    except Exception as Err:
-        print("**********SQL EXECUTE ERROR********")
-        print(Err)
-        conn.connection.rollback()
-    return result
+
+        result = db.execute(query, param=data)
+
+        db.connection.commit()
+        return result
+    except Exception as error_msg:
+        db.connection.rollback()
+        raise(error_msg)
 
 
-def delete_permission(conn, target_id):
+def delete_permission(target_id):
+    db = config.db_connection()
     try:
         query = '''
             DELETE FROM permission WHERE permission_id = ?permission_id?;
         '''
         #TODO : 할당되어있는 권한정보 삭제(user_permission, group_permission)
         
-        result = conn.execute(query, param={'permission_id': target_id})
-        conn.connection.commit()
-    except Exception as Err:
-        print("**********SQL EXECUTE ERROR********")
-        print(Err)
-        conn.connection.rollback()
-    return result
+        result = db.execute(query, param={'permission_id': target_id})
+
+        db.connection.commit()
+        return result
+    except Exception as error_msg:
+        db.connection.rollback()
+        raise(error_msg)

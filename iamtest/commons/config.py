@@ -15,6 +15,4 @@ def db_connection():
 
         return commands
     except Exception as err_msg:
-        print('ERROR : ******')
-        print(err_msg)
-        sys.exit(1)
+        raise('********ERROR********' + err_msg)

@@ -1,113 +1,79 @@
-from fastapi import APIRouter, HTTPException, Request
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, HTTPException, Depends
 from typing import Dict, Any
 import json
-from iamtest.models.entity.model import Response
+from iamtest.models.entity.response import response as Response
 from iamtest.commons import util 
 import iamtest.models.requests.service as RequestDTO
-import iamtest.commons.config as config
 import iamtest.models.querys.service as sql
 
 router = APIRouter()
-db_conn = config.db_connection()
 
-@router.get('/list', response_model=Response)
-def select_service(service_id: int | None = None, search: str | None = None):
+#서비스 목록 조회
+@router.get('/', response_model=Response)
+@router.get('/{service_id}', response_model=Response)
+def select_service(service_id: str | None = None, model: RequestDTO.Service = Depends()):
     try:
-        model = RequestDTO.Service()
         model.service_id = service_id
-        model.search = search
-
-        result_data = sql.select_service(db_conn, model)
+        result_data = sql.select_service(model)
         
-        return Response(
-            Result='OK',
-            Code='0000',
-            Message='',
-            Data=[dict(data) for data in result_data]
-        )
-    except Exception as err_msg:
-        return Response(
-            Result='Error',
-            Code='9999',
-            Message=str(err_msg),
-            Data=[]
-        )
+        Response.message=''
+        Response.data=[dict(data) for data in result_data]
+        
+        return Response
+    except Exception as error:
+        response = Response(cdoe='', message=str(error))
+        raise HTTPException(status_code=404, detail=response.dict())
 
-@router.post('/save', response_model=Response)
+#서비스 생성
+@router.post('/', response_model=Response)
 async def insert_service(model: RequestDTO.Service):
     try:
         if not util.is_value('service_name', model):
             raise Exception('서비스명을 입력하세요.')
 
-        result_data = sql.insert_service(db_conn, model)
+        result_data = sql.insert_service(model)
 
-        if result_data == 0:
+        if result_data.service_id :
+            Response.message=''
+            Response.data=[{"service_id":result_data.service_id}]
+        else:
             raise Exception('서비스를 생성하는데 실패했습니다.')
 
-        return Response(
-            Result='OK',
-            Code='0000',
-            Message='',
-            Data=[]
-        )
-    except Exception as err_msg:
-        return Response(
-            Result='Error',
-            Code='9999',
-            Message=str(err_msg),
-            Data=[]
-        )
+        return Response
+    except Exception as error:
+        response = Response(cdoe='', message=str(error))
+        raise HTTPException(status_code=404, detail=response.dict())
 
-@router.patch('/update/{service_id}', response_model=Response)
-async def update_service(service_id:int, model: RequestDTO.Service):
+@router.patch('/{service_id}', response_model=Response)
+async def update_service(service_id:str, model: RequestDTO.Service):
     try:
         if not service_id:
             raise Exception('서비스를 찾을 수 없습니다.')
         if not util.is_value('service_name', model):
             raise Exception('서비스명을 입력하세요.')
     
-        result_data = sql.update_service(db_conn, service_id, model)
+        result_data = sql.update_service(service_id, model)
 
-        #update완료된 경우
-        if result_data != 0:
-            return select_service(service_id=service_id)
+        Response.message=''
+        Response.data=[{"service_id" : service_id}]
+        return Response
+    except Exception as error:
+        response = Response(cdoe='', message=str(error))
+        raise HTTPException(status_code=404, detail=response.dict())
 
-        return Response(
-            Result='OK',
-            Code='0000',
-            Message='',
-            Data=[]
-        )
-    except Exception as err_msg:
-        return Response(
-            Result='Error',
-            Code='9999',
-            Message=str(err_msg),
-            Data=[]
-        )
-
-@router.delete('/delete/{service_id}', response_model=Response)
-async def delete_service(service_id:int):
+@router.delete('/{service_id}', response_model=Response)
+async def delete_service(service_id:str):
     try:
         if not service_id:
             raise Exception('서비스를 찾을 수 없습니다.')
     
-        result_data = sql.delete_service(db_conn, service_id)
+        result_data = sql.delete_service(service_id)
 
         if result_data == 0:
             raise Exception('서비스를 삭제하는데 실패했습니다.')
         
-        return Response(
-            Result='OK',
-            Code='0000',
-            Message='',
-            Data=[]
-        )
-    except Exception as err_msg:
-        return Response(
-            Result='Error',
-            Code='9999',
-            Message=str(err_msg),
-            Data=[]
-        )
+        Response.message=''
+        return Response
+    except Exception as error:
+        response = Response(cdoe='', message=str(error))
+        raise HTTPException(status_code=404, detail=response.dict())

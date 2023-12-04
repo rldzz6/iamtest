@@ -1,8 +1,12 @@
 from io import StringIO
 from iamtest.models.entity import service
 from iamtest.commons import util
+import iamtest.commons.config as config
 
-def select_service(conn, data):
+def select_service(data):
+    db = config.db_connection()
+    
+    search_option = util.make_search_option(data, ['service_name', 'service_url'])
     try:
         query = f'''
             SELECT
@@ -11,62 +15,68 @@ def select_service(conn, data):
                 , service_url
             FROM
                 service
-            {util.make_search_option(data, ['service_name', 'service_url'])} ;
-        '''
+        ''' 
+        query += search_option + ';'
         
-        result = conn.query(query, param=data, model=service.Service)
-        conn.connection.commit()
-    except Exception as Err:
-        print(Err)
-        conn.connection.rollback()
-    return result
 
+        if search_option != '':
+            result = db.query(query, param=data, model=service.Service)
+        else:
+            result = db.query(query, model=service.Service)
+        return result
+    except Exception as error_msg:
+        db.connection.rollback()
+        raise(error_msg)
 
-def insert_service(conn, data):
+def insert_service(data):
+    db = config.db_connection()
     try:
-        query  = util.make_insert_query('service', data)
+        insert_query = util.make_insert_query('service', data)
+        select_query = 'SELECT @@IDENTITY AS service_id;'
 
-        result = conn.execute(query, param=data)
-        conn.connection.commit()
-    except Exception as Err:
-        conn.connection.rollback()
-        print("**********SQL EXECUTE ERROR********")
-        print(Err)
-    return result
+        db.execute(insert_query, param=data)
+        result = db.query_first(select_query, param=data, model=service.Service)
+
+        db.connection.commit()
+        return result
+    except Exception as error_msg:
+        db.connection.rollback()
+        raise(error_msg)
 
 
-def update_service(conn, target_id, data):
-    values = util.make_entity_colums(data)
+def update_service(target_id, data):
+    db = config.db_connection()
+    update_values = util.make_entity_colums(data)
     try:
         query = f'''
             UPDATE
                 service
             SET 
-                {values}
+                {update_values}
             WHERE
                 service_id = {target_id};
         '''
-        
-        result = conn.execute(query, param=data)
-        conn.connection.commit()
-    except Exception as Err:
-        print("**********SQL EXECUTE ERROR********")
-        print(Err)
-        conn.connection.rollback()
-    return result
+
+        result = db.execute(query, param=data)
+
+        db.connection.commit()
+        return result
+    except Exception as error_msg:
+        db.connection.rollback()
+        raise(error_msg)
 
 
-def delete_service(conn, target_id):
+def delete_service(target_id):
+    db = config.db_connection()
     try:
         query = '''
             DELETE FROM service WHERE service_id = ?service_id?;
         '''
         #TODO : 서비스 하위 리소스 및 권한 삭제
         
-        result = conn.execute(query, param={'service_id': target_id})
-        conn.connection.commit()
-    except Exception as Err:
-        print("**********SQL EXECUTE ERROR********")
-        print(Err)
-        conn.connection.rollback()
-    return result
+        result = db.execute(query, param={'service_id': target_id})
+        db.connection.commit()
+        return result
+    except Exception as error_msg:
+        db.connection.rollback()
+        raise(error_msg)
