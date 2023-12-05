@@ -8,3 +8,13 @@ class Permission(BaseModel):
     permission_name: str | None = None
     permission: int | None = None
     remark: str | None = ''
+
+class User(BaseModel):
+    no: int | None = None
+    employee_id: str | None = None
+    employee_name: str | None = None
+    permission_id: int | None = None
+    permission_name: str | None = None
+    permission: int | None = None
+    group_id: int | None = None
+    group_name: str | None = None

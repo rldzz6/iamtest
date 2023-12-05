@@ -17,10 +17,11 @@ def select_permission(data):
                 , remark
             FROM
                 permission
+            WHERE
+                1 = 1
         ''' 
         query += search_option + ';'      
 
-        print(query)
         if search_option != '':
             result = db.query(query, param=data, model=permission.Permission)
         else:
@@ -80,6 +81,44 @@ def delete_permission(target_id):
         #TODO : 할당되어있는 권한정보 삭제(user_permission, group_permission)
         
         result = db.execute(query, param={'permission_id': target_id})
+
+        db.connection.commit()
+        return result
+    except Exception as error_msg:
+        db.connection.rollback()
+        raise(error_msg)
+
+def select_user(data):
+    db = config.db_connection()
+
+    try:
+        query = f'''
+            SELECT
+                row_number() over (order by A.employee_id) AS no
+                , A.employee_id
+                , B.employee_name
+                , C.permission_id
+                , C.permission_name
+                , C.permission
+                , D.group_id AS group_id
+                , E.group_name AS group_name
+            FROM
+                user_permission A
+                JOIN employee B ON A.employee_id = B.id
+                LEFT JOIN group_permission D ON A.group_id = D.group_id
+                LEFT JOIN `group` E ON D.group_id = E.group_id
+                JOIN permission C ON C.permission_id = D.permission_id OR A.permission_id = C.permission_id
+            WHERE
+                1 = 1
+        '''
+        if data.permission_id:
+            query += ' AND (A.permission_id = ?permission_id? OR C.permission_id = ?permission_id?) '
+        if data.search:
+            query += ' AND (B.employee_name = ?search? OR E.group_name = ?search?) '
+
+        print(query)
+        
+        result = db.query(query, param=data, model=permission.User)
 
         db.connection.commit()
         return result

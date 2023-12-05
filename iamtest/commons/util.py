@@ -30,7 +30,7 @@ def make_insert_query(table:str, model:BaseModel):
 def make_search_option(model, search_options):
     if model:
         model = model.dict(exclude_unset=True, exclude_none=True)
-        print(model)
+
         entity_colums = ''
         option_colums = ''
         try:
@@ -51,7 +51,7 @@ def make_search_option(model, search_options):
         except Exception as err_msg:
             raise Exception('쿼리문 생성 오류' + err_msg)
         if entity_colums:
-            return 'WHERE ' + entity_colums
+            return 'AND ' + entity_colums
         else:
             return ''
     else:

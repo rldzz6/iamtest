@@ -9,3 +9,6 @@ class Permission(BaseModel):
     permission: str | None = None
     remark: str | None = None
     search: str | None = None
+    group_name:  str | None = None
+    employee_id:  str | None = None
+    employee_name:  str | None = None

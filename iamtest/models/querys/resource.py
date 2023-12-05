@@ -16,6 +16,8 @@ def select_resource(data):
                 , remark
             FROM
                 resource
+            WHERE
+                1 = 1
         ''' 
         query += search_option + ';'
         

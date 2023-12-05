@@ -3,6 +3,7 @@ from fastapi.responses import JSONResponse
 from iamtest.commons import util 
 import iamtest.models.querys.group as sql
 import iamtest.models.requests.group as RequestDTO
+import iamtest.models.requests.permission as Permission
 from iamtest.models.entity.common import response as Response
 
 router = APIRouter()
@@ -23,6 +24,32 @@ def select_group(group_id: str | None = None, model: RequestDTO.Group = Depends(
         response.code= error.args[0]
         response.message= error.args[1]
         
+        raise HTTPException(status_code=404, detail=response.dict())
+
+#사용자 조회
+@router.get('/{group_id}/user', response_model=Response)
+def select_group_user(group_id: str):
+    try:
+        result_data = sql.select_group_user(group_id)
+
+        response = Response()
+        response.data=[data.dict(exclude_unset=True, exclude_none=True) for data in result_data]
+        return response
+    except Exception as error:
+        response = Response(code='', message=str(error))
+        raise HTTPException(status_code=404, detail=response.dict())
+
+#권한 목록
+@router.get('/{group_id}/permission', response_model=Response)
+def select_group_permission(group_id: str, model: Permission.Permission = Depends()):
+    try:
+        result_data = sql.select_group_permission(group_id, model)
+
+        response = Response()
+        response.data=[dict(data) for data in result_data]
+        return response
+    except Exception as error:
+        response = Response(code='', message=str(error))
         raise HTTPException(status_code=404, detail=response.dict())
 
 #권한그룹 생성

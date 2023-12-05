@@ -9,9 +9,24 @@ router = APIRouter()
 #권한 목록 조회
 @router.get('/', response_model=Response)
 @router.get('/{permission_id}', response_model=Response)
-def select_permission(permission_id: str | None = None, model: RequestDTO.Permission = Depends()):
+def select_permission(permission_id: str, model: RequestDTO.Permission = Depends()):
     try:
         result_data = sql.select_permission(model)
+
+        response = Response()
+        response.data=[dict(data) for data in result_data]
+        return response
+    except Exception as error:
+        response = Response(cdoe='', message=str(error))
+        raise HTTPException(status_code=404, detail=response.dict())
+
+#권한 사용자 목록 조회
+@router.get('/users', response_model=Response)
+@router.get('/{permission_id}/users', response_model=Response)
+def select_user(permission_id: str | None = None, model: RequestDTO.Permission = Depends()):
+    try:
+        model.permission_id = permission_id
+        result_data = sql.select_user(model)
 
         response = Response()
         response.data=[dict(data) for data in result_data]
@@ -23,7 +38,6 @@ def select_permission(permission_id: str | None = None, model: RequestDTO.Permis
 #권한 생성
 @router.post('/', response_model=Response)
 async def insert_permission(model: RequestDTO.Permission):
-    print(model)
     try:
         if not util.is_value('service_id', model):
             raise Exception('서비스 정보가 없습니다.')

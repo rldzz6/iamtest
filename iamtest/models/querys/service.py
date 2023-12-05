@@ -15,6 +15,8 @@ def select_service(data):
                 , service_url
             FROM
                 service
+            WHERE
+                1 = 1
         ''' 
         query += search_option + ';'
         
