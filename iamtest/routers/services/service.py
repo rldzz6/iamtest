@@ -1,10 +1,10 @@
 from fastapi import APIRouter, HTTPException, Depends
 from typing import Dict, Any
 import json
-from iamtest.models.entity.response import response as Response
 from iamtest.commons import util 
-import iamtest.models.requests.service as RequestDTO
 import iamtest.models.querys.service as sql
+import iamtest.models.requests.service as RequestDTO
+from iamtest.models.entity.common import response as Response
 
 router = APIRouter()
 
@@ -16,8 +16,8 @@ def select_service(service_id: str | None = None, model: RequestDTO.Service = De
         model.service_id = service_id
         result_data = sql.select_service(model)
         
-        Response.message=''
-        Response.data=[dict(data) for data in result_data]
+        response = Response()
+        response.data=[dict(data) for data in result_data]
         
         return Response
     except Exception as error:
@@ -34,12 +34,12 @@ async def insert_service(model: RequestDTO.Service):
         result_data = sql.insert_service(model)
 
         if result_data.service_id :
-            Response.message=''
-            Response.data=[{"service_id":result_data.service_id}]
-        else:
             raise Exception('서비스를 생성하는데 실패했습니다.')
 
-        return Response
+        response = Response()
+        response.data=[{"service_id":result_data.service_id}]
+
+        return response
     except Exception as error:
         response = Response(cdoe='', message=str(error))
         raise HTTPException(status_code=404, detail=response.dict())
@@ -54,9 +54,9 @@ async def update_service(service_id:str, model: RequestDTO.Service):
     
         result_data = sql.update_service(service_id, model)
 
-        Response.message=''
-        Response.data=[{"service_id" : service_id}]
-        return Response
+        response = Response()
+        response.data=[{"service_id" : service_id}]
+        return response
     except Exception as error:
         response = Response(cdoe='', message=str(error))
         raise HTTPException(status_code=404, detail=response.dict())
@@ -72,8 +72,8 @@ async def delete_service(service_id:str):
         if result_data == 0:
             raise Exception('서비스를 삭제하는데 실패했습니다.')
         
-        Response.message=''
-        return Response
+        response = Response()
+        return response
     except Exception as error:
         response = Response(cdoe='', message=str(error))
         raise HTTPException(status_code=404, detail=response.dict())

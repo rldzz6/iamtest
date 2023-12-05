@@ -1,11 +1,11 @@
 from io import StringIO
-from iamtest.models.entity import permission
 from iamtest.commons import util
 import iamtest.commons.config as config
+from iamtest.models.entity import permission
 
 def select_permission(data):
     db = config.db_connection()
-    search_option = util.make_search_option(data, ['group_name', 'remark'])
+    search_option = util.make_search_option(data, ['permission_name', 'remark'])
     try:
         query = f'''
             SELECT
@@ -39,7 +39,7 @@ def insert_permission(data):
         select_query = 'SELECT @@IDENTITY AS permission_id;'
 
         db.execute(insert_query, param=data)
-        result = db.query_first(select_query, param=data, model=permission.Permission)
+        result = db.query_first(select_query, model=permission.Permission)
 
         db.connection.commit()
         return result

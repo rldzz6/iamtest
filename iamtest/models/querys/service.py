@@ -1,7 +1,7 @@
 from io import StringIO
-from iamtest.models.entity import service
 from iamtest.commons import util
 import iamtest.commons.config as config
+from iamtest.models.entity import service
 
 def select_service(data):
     db = config.db_connection()
@@ -18,11 +18,12 @@ def select_service(data):
         ''' 
         query += search_option + ';'
         
-
         if search_option != '':
             result = db.query(query, param=data, model=service.Service)
         else:
             result = db.query(query, model=service.Service)
+  
+        db.connection.commit()
         return result
     except Exception as error_msg:
         db.connection.rollback()
@@ -35,7 +36,7 @@ def insert_service(data):
         select_query = 'SELECT @@IDENTITY AS service_id;'
 
         db.execute(insert_query, param=data)
-        result = db.query_first(select_query, param=data, model=service.Service)
+        result = db.query_first(select_query, model=service.Service)
 
         db.connection.commit()
         return result

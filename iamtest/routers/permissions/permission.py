@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException, Depends
-from iamtest.models.entity.response import response as Response
 from iamtest.commons import util 
-import iamtest.models.requests.permission as RequestDTO
 import iamtest.models.querys.permission as sql
+import iamtest.models.requests.permission as RequestDTO
+from iamtest.models.entity.common import response as Response
 
 router = APIRouter()
 
@@ -13,9 +13,9 @@ def select_permission(permission_id: str | None = None, model: RequestDTO.Permis
     try:
         result_data = sql.select_permission(model)
 
-        Response.message=''
-        Response.data=[dict(data) for data in result_data]
-        return Response
+        response = Response()
+        response.data=[dict(data) for data in result_data]
+        return response
     except Exception as error:
         response = Response(cdoe='', message=str(error))
         raise HTTPException(status_code=404, detail=response.dict())
@@ -38,12 +38,13 @@ async def insert_permission(model: RequestDTO.Permission):
         
         result_data = sql.insert_permission(model)
 
-        if result_data.permission_id :
-            Response.message=''
-            Response.data=[{"permission_id":result_data.permission_id}]
-        else:
+        if not result_data.permission_id :
             raise Exception('권한을 생성하는데 실패했습니다.')
-        return Response
+        
+        response = Response()
+        response.data=[{"permission_id":result_data.permission_id}]
+
+        return response
     except Exception as error:
         response = Response(cdoe='', message=str(error))
         raise HTTPException(status_code=404, detail=response.dict())
@@ -67,9 +68,9 @@ async def update_service(permission_id:str, model: RequestDTO.Permission):
 
         result_data = sql.update_permission(permission_id, model)
 
-        Response.message=''
-        Response.data=[{"permission_id":permission_id}]
-        return Response
+        response = Response()
+        response.data=[{"permission_id":permission_id}]
+        return response
     except Exception as error:
         response = Response(cdoe='', message=str(error))
         raise HTTPException(status_code=404, detail=response.dict())
@@ -86,8 +87,8 @@ async def delete_permission(permission_id:str):
         if result_data == 0:
             raise Exception('권한을 삭제하는데 실패했습니다.')
 
-        Response.message=''
-        return Response
+        response = Response()
+        return response
     except Exception as error:
         response = Response(cdoe='', message=str(error))
         raise HTTPException(status_code=404, detail=response.dict())

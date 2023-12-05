@@ -1,12 +1,11 @@
 from fastapi import FastAPI, Request, status
 from mangum import Mangum
-from fastapi.encoders import jsonable_encoder
-from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from iamtest.routers.users import user
 from iamtest.routers.services import service
 from iamtest.routers.resources import resource
 from iamtest.routers.permissions import permission
 from iamtest.routers.groups import group
+from iamtest.models.entity.common import response as Response
 
 app = FastAPI()
 lambda_handler = Mangum(app)
@@ -20,11 +19,6 @@ app.include_router(group.router, prefix="/groups", tags=["group"])
 #테스트 코드
 @app.get('/')
 def root():
-    return{'DidimAIM': 'iam.didimservice.com'}
-
-@app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    return JSONResponse(
-        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        content=jsonable_encoder({"detail": exc.errors(), "body": exc.body}),
-    )
+    response = Response()
+    response.message = 'test site'
+    return response

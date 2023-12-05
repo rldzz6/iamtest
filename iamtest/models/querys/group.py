@@ -1,7 +1,7 @@
 from io import StringIO
-from iamtest.models.entity import group
 from iamtest.commons import util
 import iamtest.commons.config as config
+from iamtest.models.entity import group
 
 def select_group(data):
     db = config.db_connection()
@@ -36,7 +36,7 @@ def insert_group(data):
         select_query = 'SELECT @@IDENTITY AS group_id;'
 
         db.execute(insert_query, param=data)
-        result = db.query_first(select_query, param=data, model=group.Group)
+        result = db.query_first(select_query, model=group.Group)
 
         db.connection.commit()
         return result

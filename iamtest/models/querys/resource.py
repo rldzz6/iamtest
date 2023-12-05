@@ -1,18 +1,18 @@
 from io import StringIO
-from iamtest.models.entity import resource
 from iamtest.commons import util
 import iamtest.commons.config as config
+from iamtest.models.entity import resource
 
 def select_resource(data):
     db = config.db_connection()
     
-    search_option = util.make_search_option(data, ['group_name', 'remark'])
+    search_option = util.make_search_option(data, ['resource_name', 'remark'])
     try:
         query = f'''
             SELECT
                 resource_id
                 , service_id
-                , name
+                , resource_name
                 , remark
             FROM
                 resource
@@ -37,7 +37,7 @@ def insert_resource(data):
         select_query = 'SELECT @@IDENTITY AS resource_id;'
 
         db.execute(insert_query, param=data)
-        result = db.query_first(select_query, param=data, model=resource.Resource)
+        result = db.query_first(select_query, model=resource.Resource)
 
         db.connection.commit()
         return result

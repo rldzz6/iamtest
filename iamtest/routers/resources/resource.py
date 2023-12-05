@@ -1,10 +1,10 @@
 from fastapi import APIRouter, HTTPException, Depends
 from typing import Dict, Any
 import json
-from iamtest.models.entity.response import response as Response
 from iamtest.commons import util 
-import iamtest.models.requests.resource as RequestDTO
 import iamtest.models.querys.resource as sql
+import iamtest.models.requests.resource as RequestDTO
+from iamtest.models.entity.common import response as Response
 
 router = APIRouter()
 
@@ -16,9 +16,9 @@ def select_resource(resource_id: str | None = None, model: RequestDTO.Resource =
         model.resource_id = resource_id
         result_data = sql.select_resource(model)
 
-        Response.message=''
-        Response.data=[dict(data) for data in result_data]
-        return Response
+        response = Response()
+        response.data=[dict(data) for data in result_data]
+        return response
     except Exception as error:
         response = Response(cdoe='', message=str(error))
         raise HTTPException(status_code=404, detail=response.dict())
@@ -34,12 +34,13 @@ async def insert_resource(model: RequestDTO.Resource):
         
         result_data = sql.insert_resource(model)
 
-        if result_data.resource_id :
-            Response.message=''
-            Response.data=[{"resource_id":result_data.resource_id}]
-        else:
+        if not result_data.resource_id :
             raise Exception('리소스를 생성하는데 실패했습니다.')
-        return Response
+
+        response = Response()
+        response.data=[{"resource_id":result_data.resource_id}]
+
+        return response
     except Exception as error:
         response = Response(cdoe='', message=str(error))
         raise HTTPException(status_code=404, detail=response.dict())
@@ -57,9 +58,9 @@ async def update_service(resource_id:str, model: RequestDTO.Resource):
 
         result_data = sql.update_resource(resource_id, model)
 
-        Response.message=''
-        Response.data=[{"resource_id" : resource_id}]
-        return Response
+        response = Response()
+        response.data=[{"resource_id" : resource_id}]
+        return response
     except Exception as error:
         response = Response(cdoe='', message=str(error))
         raise HTTPException(status_code=404, detail=response.dict())
@@ -76,8 +77,8 @@ async def delete_resource(resource_id:str):
         if result_data == 0:
             raise Exception('리소스를 삭제하는데 실패했습니다.')
 
-        Response.message=''
-        return Response
+        response = Response()
+        return response
     except Exception as error:
         response = Response(cdoe='', message=str(error))
         raise HTTPException(status_code=404, detail=response.dict())
