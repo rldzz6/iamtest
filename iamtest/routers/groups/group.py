@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Header
 from fastapi.responses import JSONResponse
 from iamtest.commons import util 
 import iamtest.models.querys.group as sql
@@ -11,7 +11,7 @@ router = APIRouter()
 #권한그룹 목록 조회
 @router.get('/', response_model=Response)
 @router.get('/{group_id}', response_model=Response)
-def select_group(group_id: str | None = None, model: RequestDTO.Group = Depends()):
+def select_group(group_id: str | None = None, model: RequestDTO.Group = Depends(), identity: str = Header(default=None)):
     try:
         model.group_id = group_id
         result_data = sql.select_group(model)
@@ -28,7 +28,7 @@ def select_group(group_id: str | None = None, model: RequestDTO.Group = Depends(
 
 #사용자 조회
 @router.get('/{group_id}/user', response_model=Response)
-def select_group_user(group_id: str):
+def select_group_user(group_id: str, identity: str = Header(default=None)):
     try:
         result_data = sql.select_group_user(group_id)
 
@@ -41,7 +41,7 @@ def select_group_user(group_id: str):
 
 #권한 목록
 @router.get('/{group_id}/permission', response_model=Response)
-def select_group_permission(group_id: str, model: Permission.Permission = Depends()):
+def select_group_permission(group_id: str, model: Permission.Permission = Depends(), identity: str = Header(default=None)):
     try:
         result_data = sql.select_group_permission(group_id, model)
 
@@ -54,7 +54,7 @@ def select_group_permission(group_id: str, model: Permission.Permission = Depend
 
 #권한그룹 생성
 @router.post('/', response_model=Response)
-async def insert_group(model: RequestDTO.Group):
+async def insert_group(model: RequestDTO.Group, identity: str = Header(default=None)):
     try:
         if not util.is_value('group_name', model):
             raise Exception('그룹명을 입력하세요.')
@@ -74,7 +74,7 @@ async def insert_group(model: RequestDTO.Group):
 
 #권한그룹 정보 수정
 @router.patch('/{group_id}', response_model=Response)
-async def update_service(group_id:str, model: RequestDTO.Group):
+async def update_service(group_id:str, model: RequestDTO.Group, identity: str = Header(default=None)):
     try:
         if not group_id:
             raise Exception('권한그룹을 찾을 수 없습니다.')
@@ -92,7 +92,7 @@ async def update_service(group_id:str, model: RequestDTO.Group):
 
 #권한그룹 삭제
 @router.delete('/{group_id}', response_model=Response)
-async def delete_group(group_id:str):
+async def delete_group(group_id:str, identity: str = Header(default=None)):
     try:
         if not group_id:
             raise Exception('권한그룸을 찾을 수 없습니다.')

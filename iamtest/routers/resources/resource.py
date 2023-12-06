@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Header
 from typing import Dict, Any
 import json
 from iamtest.commons import util 
@@ -11,7 +11,7 @@ router = APIRouter()
 #리소스 목록 조회
 @router.get('/', response_model=Response)
 @router.get('/{resource_id}', response_model=Response)
-def select_resource(resource_id: str | None = None, model: RequestDTO.Resource = Depends()):
+def select_resource(resource_id: str | None = None, model: RequestDTO.Resource = Depends(), identity: str = Header(default=None)):
     try:
         model.resource_id = resource_id
         result_data = sql.select_resource(model)
@@ -25,7 +25,7 @@ def select_resource(resource_id: str | None = None, model: RequestDTO.Resource =
 
 #리소스 생성
 @router.post('/', response_model=Response)
-async def insert_resource(model: RequestDTO.Resource):
+async def insert_resource(model: RequestDTO.Resource, identity: str = Header(default=None)):
     try:
         if not util.is_value('service_id', model):
             raise Exception('서비스 정보가 없습니다.')
@@ -47,7 +47,7 @@ async def insert_resource(model: RequestDTO.Resource):
 
 #리소스 정보 업데이트
 @router.patch('/{resource_id}', response_model=Response)
-async def update_service(resource_id:str, model: RequestDTO.Resource):
+async def update_service(resource_id:str, model: RequestDTO.Resource, identity: str = Header(default=None)):
     try:
         if not resource_id:
             raise Exception('리소스를 찾을 수 없습니다.')
@@ -67,7 +67,7 @@ async def update_service(resource_id:str, model: RequestDTO.Resource):
 
 #f리소스 삭제
 @router.delete('/{resource_id}', response_model=Response)
-async def delete_resource(resource_id:str):
+async def delete_resource(resource_id:str, identity: str = Header(default=None)):
     try:
         if not resource_id:
             raise Exception('리소스를 찾을 수 없습니다.')

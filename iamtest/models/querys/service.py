@@ -18,13 +18,14 @@ def select_service(data):
             WHERE
                 1 = 1
         ''' 
-        query += search_option + ';'
+        query += search_option
+        query += util.pagination(data.page_no)
         
         if search_option != '':
             result = db.query(query, param=data, model=service.Service)
         else:
             result = db.query(query, model=service.Service)
-  
+
         db.connection.commit()
         return result
     except Exception as error_msg:

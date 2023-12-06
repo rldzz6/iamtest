@@ -20,7 +20,8 @@ def select_permission(data):
             WHERE
                 1 = 1
         ''' 
-        query += search_option + ';'      
+        query += search_option
+        query += util.pagination(data.page_no) 
 
         if search_option != '':
             result = db.query(query, param=data, model=permission.Permission)
@@ -94,8 +95,7 @@ def select_user(data):
     try:
         query = f'''
             SELECT
-                row_number() over (order by A.employee_id) AS no
-                , A.employee_id
+                A.employee_id
                 , B.employee_name
                 , C.permission_id
                 , C.permission_name
@@ -115,8 +115,7 @@ def select_user(data):
             query += ' AND (A.permission_id = ?permission_id? OR C.permission_id = ?permission_id?) '
         if data.search:
             query += ' AND (B.employee_name = ?search? OR E.group_name = ?search?) '
-
-        print(query)
+        query += util.pagination(data.page_no)
         
         result = db.query(query, param=data, model=permission.User)
 

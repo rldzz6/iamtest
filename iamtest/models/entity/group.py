@@ -8,7 +8,6 @@ class Group(BaseModel):
     
 
 class Group_Permission(BaseModel):
-    no: int | None = None
     group_id: int | None = None
     service_id: int | None = None
     service_name: str | None = None

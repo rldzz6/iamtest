@@ -19,7 +19,8 @@ def select_resource(data):
             WHERE
                 1 = 1
         ''' 
-        query += search_option + ';'
+        query += search_option
+        query += util.pagination(data.page_no)
         
         if search_option != '':
             result = db.query(query, param=data, model=resource.Resource)

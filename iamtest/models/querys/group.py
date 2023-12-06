@@ -18,7 +18,8 @@ def select_group(data):
             WHERE
                 1 = 1
         ''' 
-        query += search_option + ';'
+        query += search_option
+        query += util.pagination(data.page_no)
 
         if search_option != '':
             result = db.query(query, param=data, model=group.Group)
@@ -59,8 +60,7 @@ def select_group_permission(target_id, data):
     try:
         query = f'''
             SELECT DISTINCT
-                row_number() over (order by B.service_id, B.resource_id, B.permission_id) AS no
-                , A.group_id
+                A.group_id
                 , C.service_id
                 , C.service_name
                 , D.resource_id

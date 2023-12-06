@@ -10,7 +10,6 @@ class Permission(BaseModel):
     remark: str | None = ''
 
 class User(BaseModel):
-    no: int | None = None
     employee_id: str | None = None
     employee_name: str | None = None
     permission_id: int | None = None

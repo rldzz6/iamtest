@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Header
 from iamtest.commons import util 
 import iamtest.models.querys.permission as sql
 import iamtest.models.requests.permission as RequestDTO
@@ -9,7 +9,7 @@ router = APIRouter()
 #권한 목록 조회
 @router.get('/', response_model=Response)
 @router.get('/{permission_id}', response_model=Response)
-def select_permission(permission_id: str, model: RequestDTO.Permission = Depends()):
+def select_permission(permission_id: str, model: RequestDTO.Permission = Depends(), identity: str = Header(default=None)):
     try:
         result_data = sql.select_permission(model)
 
@@ -23,7 +23,7 @@ def select_permission(permission_id: str, model: RequestDTO.Permission = Depends
 #권한 사용자 목록 조회
 @router.get('/users', response_model=Response)
 @router.get('/{permission_id}/users', response_model=Response)
-def select_user(permission_id: str | None = None, model: RequestDTO.Permission = Depends()):
+def select_user(permission_id: str | None = None, model: RequestDTO.Permission = Depends(), identity: str = Header(default=None)):
     try:
         model.permission_id = permission_id
         result_data = sql.select_user(model)
@@ -37,7 +37,7 @@ def select_user(permission_id: str | None = None, model: RequestDTO.Permission =
 
 #권한 생성
 @router.post('/', response_model=Response)
-async def insert_permission(model: RequestDTO.Permission):
+async def insert_permission(model: RequestDTO.Permission, identity: str = Header(default=None)):
     try:
         if not util.is_value('service_id', model):
             raise Exception('서비스 정보가 없습니다.')
@@ -65,7 +65,7 @@ async def insert_permission(model: RequestDTO.Permission):
 
 #권한 정보 업데이트
 @router.patch('/{permission_id}', response_model=Response)
-async def update_service(permission_id:str, model: RequestDTO.Permission):
+async def update_service(permission_id:str, model: RequestDTO.Permission, identity: str = Header(default=None)):
     try:
         if not permission_id:
             raise Exception('권한 정보를 찾을 수 없습니다.')
@@ -91,7 +91,7 @@ async def update_service(permission_id:str, model: RequestDTO.Permission):
 
 #권한 삭제
 @router.delete('/{permission_id}', response_model=Response)
-async def delete_permission(permission_id:str):
+async def delete_permission(permission_id:str, identity: str = Header(default=None)):
     try:
         if not permission_id:
             raise Exception('권한을 찾을 수 없습니다.')

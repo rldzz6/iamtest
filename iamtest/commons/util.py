@@ -1,5 +1,36 @@
-#공통함수
 from pydantic import BaseModel
+from datetime import datetime
+import iamtest.commons.config as config
+from iamtest.models.entity.common import Log
+
+page_unit = 20
+
+def log(category, work_type, rmk, request_body, status, employee_id, error_msg = ''):
+    
+    description = rmk
+    if request_body:
+        description += '\n' + str(request_body.dict(exclude_none=True))
+    if error_msg:
+        description += '\n' + '**error msg :' + error_msg
+    
+    log = Log()
+    log.category = category
+    log.description = description
+    log.work_type = work_type
+    log.work_status = status
+    log.work_time = str(datetime.now())
+    log.employee_id = employee_id
+    log.work_ip = ''
+    
+    try:
+        db = config.db_connection()
+        insert_query = make_insert_query('iam_log', log)
+
+        db.execute(insert_query, param=log)
+        db.connection.commit()
+    except Exception as error_msg:
+        db.connection.rollback()
+        raise(error_msg)
 
 #INSERT문 쿼리 생성
 def make_insert_query(table:str, model:BaseModel):
@@ -35,6 +66,7 @@ def make_search_option(model, search_options):
         option_colums = ''
         try:
             for key in model:
+                if key == 'page_no': continue
                 if entity_colums:
                     entity_colums += ' AND '
                 if key == 'search' and len(search_options) > 0:
@@ -56,6 +88,14 @@ def make_search_option(model, search_options):
             return ''
     else:
         return ''
+
+#SELECT문 pagination옵션 생성 (페이지번호, 출력갯수)
+def pagination(page):
+    # page_no = -1인 경우 전체 리스트 호출
+    if page == -1:
+        return ';'
+    else:
+        return ' LIMIT {},{} ;'.format(page_unit * page, page_unit)
 
 #UPDATE문 SET옵션 생성
 def make_entity_colums(model:BaseModel):
