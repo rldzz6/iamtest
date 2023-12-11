@@ -122,6 +122,7 @@ def select_user_count(data):
             result = db.execute_scalar(query, param=data)
         else:
             result = db.execute_scalar(query)
+
         return result
     except Exception as error_msg:
         db.connection.rollback()
@@ -213,3 +214,4 @@ def clear_permission(group_id, emplyoee_id):
     except Exception as error_msg:
         db.connection.rollback()
         raise(error_msg)
+

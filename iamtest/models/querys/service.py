@@ -57,6 +57,7 @@ def select_service_count(data):
 
 def insert_service(data):
     db = config.db_connection()
+    search_option = util.make_search_option(data, ['service_name', 'service_url'])
     try:
         insert_query = util.make_insert_query('service', data)
         select_query = 'SELECT @@IDENTITY AS service_id;'
@@ -64,7 +65,10 @@ def insert_service(data):
         db.execute(insert_query, param=data)
         result = db.query_single(select_query, model=service.Service)
 
-        db.connection.commit()
+        if search_option != '':
+            result = db.execute_scalar(query, param=data)
+        else:
+            result = db.execute_scalar(query)
         return result
     except Exception as error_msg:
         db.connection.rollback()

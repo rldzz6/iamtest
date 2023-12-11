@@ -41,6 +41,7 @@ async def insert_group(request:Request, model: RequestDTO.Group):
  
         response = Response(data={"group_id":result_data.group_id}, total_count=1)
         util.log(category, '권한그룹 생성', model, identity)
+
         return response
     except Exception as error:
         status_code = 400

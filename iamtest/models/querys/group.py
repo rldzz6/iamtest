@@ -4,6 +4,7 @@ from iamtest.commons import config
 from iamtest.models.entity import group
 
 def select_group(data, page_no=1):
+
     db = config.db_connection()
     search_option = util.make_search_option(data, ['group_name', 'remark'])
     try:
@@ -238,3 +239,4 @@ def clear_permission(group_id, permission_id):
     except Exception as error_msg:
         db.connection.rollback()
         raise(error_msg)
+
