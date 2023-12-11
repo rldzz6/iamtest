@@ -1,20 +1,22 @@
-from fastapi import APIRouter, HTTPException, Header
-from typing import Dict, Any
-import json
+from fastapi import APIRouter, HTTPException, Header, Request
+from typing import Dict, Any, Union
 from iamtest.commons import util 
 import iamtest.models.querys.user as sql
-from iamtest.models.entity.common import response as Response
+from iamtest.models.entity.common import Response
 
 router = APIRouter()
 
-@router.get('/', response_model=Response)
-def select_info(identity: str = Header(default=None)):
+@router.get('')
+def select_info(request:Request):
+    identity = request.headers.get("identity") #header의 사번
     try:
+        if not identity:
+            raise Exception('사원정보가 없습니다.')
         result_data = sql.select_info(identity)
 
-        response = Response()
-        response.data=[dict(data) for data in result_data]
+        response = Response(data=result_data.dict())
         return response
     except Exception as error:
-        response = Response(cdoe='', message=str(error))
-        raise HTTPException(status_code=404, detail=response.dict())
+        status_code = 400
+        response = util.exception_log(request=request, exc=error, status=status_code)
+        raise HTTPException(status_code=status_code, detail=response.dict())
