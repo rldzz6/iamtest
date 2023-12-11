@@ -55,6 +55,21 @@ def select_service_count(data):
         db.connection.rollback()
         raise(error_msg)
 
+def insert_service(data):
+    db = config.db_connection()
+    try:
+        insert_query = util.make_insert_query('service', data)
+        select_query = 'SELECT @@IDENTITY AS service_id;'
+
+        db.execute(insert_query, param=data)
+        result = db.query_single(select_query, model=service.Service)
+
+        db.connection.commit()
+        return result
+    except Exception as error_msg:
+        db.connection.rollback()
+        raise(error_msg)
+
 #서비스 정보 수정
 def update_service(target_id, data):
     db = config.db_connection()

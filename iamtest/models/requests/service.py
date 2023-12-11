@@ -6,4 +6,4 @@ class Service(BaseModel):
     service_name: str | None = None
     service_url: str | None = None
     search: str | None = None
-    keyword: int | None = None
+    keyword: str | None = None
