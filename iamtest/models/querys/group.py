@@ -3,7 +3,8 @@ from iamtest.commons import util
 from iamtest.commons import config
 from iamtest.models.entity import group
 
-def select_group(data, page_no):
+def select_group(data, page_no=1):
+
     db = config.db_connection()
     search_option = util.make_search_option(data, ['group_name', 'remark'])
     try:
@@ -60,8 +61,7 @@ def select_group_user(target_id):
     try:
         query = f'''
             SELECT DISTINCT
-                row_number() over (order by A.employee_id) AS no
-                , B.group_id
+                B.group_id
                 , A.employee_id
                 , C.employee_name
             FROM
@@ -72,7 +72,7 @@ def select_group_user(target_id):
                 A.group_id = '{target_id}';
         '''
 
-        result = db.query(query, model=group.Group_Permission)
+        result = db.query(query, model=group.Permission)
 
         db.connection.commit()
         return result
@@ -81,7 +81,7 @@ def select_group_user(target_id):
         raise(error_msg)
 
 #권한그룹의 권한 조회
-def select_group_permission(target_id, data, page_no):
+def select_group_permission(data, page_no = 1):
     db = config.db_connection()
     try:
         query = f'''
@@ -102,19 +102,19 @@ def select_group_permission(target_id, data, page_no):
             WHERE
                 A.group_id = ?group_id?
         '''
-        if data.service_id:
+        if util.is_value('service_id', data) and data.service_id:
             query += ' AND C.service_id = ?service_id? '
-        if data.resource_id:
+        if util.is_value('resource_id', data) and data.resource_id:
             query += ' AND D.resource_id = ?resource_id? '
-        if data.permission_name:
+        if util.is_value('permission_name', data) and data.permission_name:
             query += ' AND LOCATE(?permission_name?, B.permission_name) > 0 '
         query += ' GROUP BY A.group_id, C.service_id, C.service_name, D.resource_id, D.resource_name, B.permission_id, B.permission_name, B.permission '
         query += util.pagination(page_no)
 
         if data:
-            result = db.query(query, param=data, model=group.Group_Permission)
+            result = db.query(query, param=data, model=group.Permission)
         else:
-            result = db.query(query, model=group.Group_Permission)
+            result = db.query(query, model=group.Permission)
 
         db.connection.commit()
         return result
@@ -162,7 +162,7 @@ def insert_group(data):
         select_query = 'SELECT @@IDENTITY AS group_id;'
 
         db.execute(insert_query, param=data)
-        result = db.query_first(select_query, model=group.Group)
+        result = db.query_single(select_query, model=group.Group)
 
         db.connection.commit()
         return result
@@ -208,3 +208,35 @@ def delete_group(target_id):
     except Exception as error_msg:
         db.connection.rollback()
         raise(error_msg)
+
+#권한그룹에 권한 할당
+def allocation_permission(data):
+    db = config.db_connection()
+    try:
+        query = util.make_insert_query('group_permission', data)
+
+        db.execute(query, param=data)
+        db.connection.commit()
+        return
+    except Exception as error_msg:
+        db.connection.rollback()
+        raise(error_msg)
+
+#권한그룹에 할단된 권한 제거
+def clear_permission(group_id, permission_id):
+    db = config.db_connection()
+    try:
+        query = '''
+            DELETE FROM group_permission WHERE group_id = ?group_id?
+        '''
+        if permission_id:
+            query += ' AND permission_id = ?permission_id?'
+
+        print(query)
+        db.execute(query, param={'group_id':group_id, 'permission_id':permission_id})
+        db.connection.commit()
+        return
+    except Exception as error_msg:
+        db.connection.rollback()
+        raise(error_msg)
+

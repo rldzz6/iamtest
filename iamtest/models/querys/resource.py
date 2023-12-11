@@ -64,7 +64,7 @@ def insert_resource(data):
         select_query = 'SELECT @@IDENTITY AS resource_id;'
 
         db.execute(insert_query, param=data)
-        result = db.query_first(select_query, model=resource.Resource)
+        result = db.query_single(select_query, model=resource.Resource)
 
         db.connection.commit()
         return result

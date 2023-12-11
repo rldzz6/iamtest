@@ -19,3 +19,8 @@ class Permission(BaseModel):
     employee_id: str | None = None
     employee_name: str | None = None
     keyword: str | None = None
+
+class Allocation(BaseModel):
+    group_id: str | None = None
+    employee_list: str | None = None
+    permission_list: str | None = None

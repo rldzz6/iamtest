@@ -59,9 +59,8 @@ def select_permission_count(data):
         db.connection.rollback()
         raise(error_msg)
 
-def select_user(data):
+def select_user(data, page_no):
     db = config.db_connection()
-
     try:
         query = f'''
             SELECT
@@ -83,14 +82,47 @@ def select_user(data):
         '''
         if data.permission_id:
             query += ' AND (A.permission_id = ?permission_id? OR C.permission_id = ?permission_id?) '
-        if data.search:
-            query += ' AND (B.employee_name = ?search? OR E.group_name = ?search?) '
+        if data.keyword:
+            query += ' AND (B.employee_name = ?keyword? OR E.group_name = ?keyword?) '
         if data.employee_id:
             query += ' AND (A.employee_id = ?employee_id?) '
 
-        result = db.query(query, param=data, model=permission.User)
+        result = db.execute_scalar(query, param=data)
 
         db.connection.commit()
+        return result
+    except Exception as error_msg:
+        db.connection.rollback()
+        raise(error_msg)
+
+def select_user_count(data):
+    db = config.db_connection()
+    search_option = util.make_search_option(data, ['permission_name', 'remark'])
+    try:
+        query = f'''
+            SELECT
+                COUNT(*) AS count
+            FROM
+                user_permission A
+                JOIN employee B ON A.employee_id = B.id
+                LEFT JOIN group_permission D ON A.group_id = D.group_id
+                LEFT JOIN `group` E ON D.group_id = E.group_id
+                JOIN permission C ON C.permission_id = D.permission_id OR A.permission_id = C.permission_id
+            WHERE
+                1 = 1
+        '''
+        if data.permission_id:
+            query += ' AND (A.permission_id = ?permission_id? OR C.permission_id = ?permission_id?) '
+        if data.keyword:
+            query += ' AND (B.employee_name = ?keyword? OR E.group_name = ?keyword?) '
+        if data.employee_id:
+            query += ' AND (A.employee_id = ?employee_id?) '
+        
+        if search_option != '':
+            result = db.execute_scalar(query, param=data)
+        else:
+            result = db.execute_scalar(query)
+
         return result
     except Exception as error_msg:
         db.connection.rollback()
@@ -104,7 +136,7 @@ def insert_permission(data):
         select_query = 'SELECT @@IDENTITY AS permission_id;'
 
         db.execute(insert_query, param=data)
-        result = db.query_first(select_query, model=permission.Permission)
+        result = db.query_single(select_query, model=permission.Permission)
 
         db.connection.commit()
         return result
@@ -151,3 +183,35 @@ def delete_permission(target_id):
     except Exception as error_msg:
         db.connection.rollback()
         raise(error_msg)
+
+#사원에게 권한 할당 (권한 또는 권한그룹)
+def allocation_permission(data):
+    db = config.db_connection()
+    try:
+        query = util.make_insert_query('user_permission', data)
+
+        db.execute(query, param=data)
+        db.connection.commit()
+        return
+    except Exception as error_msg:
+        db.connection.rollback()
+        raise(error_msg)
+
+#사원에게 할당된 권한그룹 제거
+def clear_permission(group_id, emplyoee_id):
+    db = config.db_connection()
+    try:
+        query = '''
+            DELETE FROM user_permission WHERE group_id = ?group_id?
+        '''
+        if emplyoee_id:
+            query += ' AND employee_id = ?emplyoee_id?'
+
+        print(query)
+        db.execute(query, param={'group_id':group_id, 'emplyoee_id':emplyoee_id})
+        db.connection.commit()
+        return
+    except Exception as error_msg:
+        db.connection.rollback()
+        raise(error_msg)
+

@@ -28,14 +28,14 @@ def select_permission(request:Request, page: int = 0, model: RequestDTO.Permissi
 #TODO:권한 또는 권한 그룹의 사용자 조회
 @router.get('/user/{employee_id}', response_model=Response)
 @router.get('/{permission_id}/users', response_model=Response)
-def select_user(permission_id: str | None = None, employee_id: str | None = None, model: RequestDTO.Permission = Depends()):
+def select_user(request:Request, page: int = 0, model: RequestDTO.Permission = Depends()):
+    identity = request.headers.get("identity")
     try:
-        model.permission_id = permission_id
-        model.employee_id = employee_id
-        result_data = sql.select_user(model)
+        result_data = sql.select_user(model, page)
+        total_count = sql.select_user_count(model)
 
-        response = Response()
-        response.data=[dict(data) for data in result_data]
+        response = util.make_response(result_data, total_count)
+        util.log(category, '권한 정보 조회', model, identity)
         return response
     except Exception as error:
         response = Response(cdoe='', message=str(error))
