@@ -5,7 +5,7 @@ from iamtest.routers.services import service
 from iamtest.routers.resources import resource
 from iamtest.routers.permissions import permission
 from iamtest.routers.groups import group
-from iamtest.models.entity.common import response as Response
+from iamtest.models.entity.common import Response
 
 app = FastAPI()
 lambda_handler = Mangum(app)
