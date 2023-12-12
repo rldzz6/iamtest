@@ -144,13 +144,13 @@ async def allocate_group_user(request:Request, model: RequestDTO.Allocation):
         renew_permission_list = model.permission_list.replace(' ', '').split(',')
         #기존에 할당되어있던 권한 목록
         orl_permission_info = sql.select_group_permission(model)
-        orl_permission_list = [data.permission_id for data in old_group_info]
+        orl_permission_list = [data.permission_id for data in orl_permission_info]
         
         #권한그룹에 권한 할당
         for new_permission in list(set(renew_permission_list) - set(orl_permission_list)):
             if new_permission:
                 data = RequestDTO.Permission(group_id=model.group_id, permission_id=new_permission)
-            sql.allocation_permission(data)
+                sql.allocation_permission(data)
         #권한할당된 권한 제거
         for clear_permission in list(set(orl_permission_list) - set(renew_permission_list)):
             if clear_permission:
