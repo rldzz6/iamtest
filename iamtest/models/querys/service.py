@@ -1,7 +1,7 @@
 from io import StringIO
-from didimiam.commons import util
-from didimiam.commons import config
-from didimiam.models.entity import service
+from iamtest.commons import util
+from iamtest.commons import config
+from iamtest.models.entity import service
 
 #서비스 목록 조회
 def select_service(conn, data, page_no):

@@ -1,7 +1,7 @@
 from io import StringIO
-from didimiam.commons import util
-from didimiam.commons import config
-from didimiam.models.entity import resource
+from iamtest.commons import util
+from iamtest.commons import config
+from iamtest.models.entity import resource
 
 #리소스 목록 조회
 def select_resource(conn, data, page_no):

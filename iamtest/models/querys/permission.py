@@ -1,7 +1,7 @@
 from io import StringIO
-from didimiam.commons import util
-from didimiam.commons import config
-from didimiam.models.entity import permission
+from iamtest.commons import util
+from iamtest.commons import config
+from iamtest.models.entity import permission
 
 #권한 정보 조회
 def select_permission(conn, data, page_no):

@@ -7,10 +7,10 @@ from datetime import datetime
 import logging
 from pydantic import BaseModel
 from datetime import datetime
-from didimiam.commons import config
-from didimiam.models.entity.common import Log
-from didimiam.models.entity.common import Response
-from didimiam.models.entity.common import Errorlog
+from iamtest.commons import config
+from iamtest.models.entity.common import Log
+from iamtest.models.entity.common import Response
+from iamtest.models.entity.common import Errorlog
 
 page_unit = 20
 

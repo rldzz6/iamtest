@@ -1,10 +1,10 @@
 from fastapi import APIRouter, HTTPException, Depends, Header, Request
 import logging
-from didimiam.commons import util 
-from didimiam.commons import config
-import didimiam.models.querys.permission as sql
-import didimiam.models.requests.permission as RequestDTO
-from didimiam.models.entity.common import Response
+from iamtest.commons import util 
+from iamtest.commons import config
+import iamtest.models.querys.permission as sql
+import iamtest.models.requests.permission as RequestDTO
+from iamtest.models.entity.common import Response
 
 router = APIRouter()
 category = '권한 관리'

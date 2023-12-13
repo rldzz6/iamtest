@@ -2,11 +2,11 @@ from fastapi import APIRouter, HTTPException, Depends, Header, Request
 from typing import Dict, Any
 from datetime import datetime
 import json, logging
-from didimiam.commons import util
-from didimiam.commons import config
-import didimiam.models.querys.service as sql
-import didimiam.models.requests.service as RequestDTO
-from didimiam.models.entity.common import Response
+from iamtest.commons import util
+from iamtest.commons import config
+import iamtest.models.querys.service as sql
+import iamtest.models.requests.service as RequestDTO
+from iamtest.models.entity.common import Response
 
 router = APIRouter()
 category = '서비스 관리'

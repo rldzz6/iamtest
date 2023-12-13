@@ -1,7 +1,7 @@
 from io import StringIO
-from didimiam.commons import util
-from didimiam.commons import config
-from didimiam.models.entity import group
+from iamtest.commons import util
+from iamtest.commons import config
+from iamtest.models.entity import group
 
 def select_group(conn, data, page_no):
     try:
