@@ -1,82 +1,73 @@
 from io import StringIO
-from iamtest.commons import util
-from iamtest.commons import config
-from iamtest.models.entity import service
+from didimiam.commons import util
+from didimiam.commons import config
+from didimiam.models.entity import service
 
 #서비스 목록 조회
-def select_service(data, page_no):
-    db = config.db_connection()
-    search_option = util.make_search_option(data, ['service_name', 'service_url'])
+def select_service(conn, data, page_no):
     try:
         query = f'''
             SELECT
-                service_id
-                , service_name
-                , service_url
+                A.service_id
+                , A.service_name
+                , A.service_url
             FROM
-                service
+                service A
             WHERE
                 1 = 1
         ''' 
-        query += search_option
+        if util.is_value('service_id', data) and data.service_id:
+            query += " AND A.service_id = '{}' ".format(data.service_id)
+        if util.is_value('keyword', data) and data.keyword:
+            query += " AND (LOCATE('{keyword}', A.service_name) > 0  OR  LOCATE('{keyword}', A.service_url) > 0 ) ".format(keyword = data.keyword)
         query += util.pagination(page_no)        
 
-        if search_option != '':
-            result = db.query(query, param=data, model=service.Service)
-        else:
-            result = db.query(query, model=service.Service)
-        db.connection.commit()
-        return result
-    except Exception as error_msg:
-        db.connection.rollback()
-        raise(error_msg)
+        with conn.cursor() as cur:
+            cur.execute(query)
+            columns = cur.description
+            result = [{columns[index][0]:column for index, column in enumerate(value)} for value in cur.fetchall()]
+            return result
+    except Exception as error:
+        raise Exception(error)
 
 #서비스 전체 갯수 조회
-def select_service_count(data):
-    db = config.db_connection()
-    search_option = util.make_search_option(data, ['service_name', 'service_url'])
+def select_service_count(conn, data):
     try:
         query = f'''
             SELECT
                 COUNT(*) AS count
             FROM
-                service
+                service A
             WHERE
                 1 = 1
         ''' 
-        query += search_option
+        if util.is_value('service_id', data) and data.service_id:
+            query += " AND A.service_id = '{}' ".format(data.service_id)
+        if util.is_value('keyword', data) and data.keyword:
+            query += " AND (LOCATE('{keyword}', A.service_name) > 0  OR  LOCATE('{keyword}', A.service_url) > 0 ) ".format(keyword = data.keyword)
 
-        if search_option != '':
-            result = db.execute_scalar(query, param=data)
-        else:
-            result = db.execute_scalar(query)
-        return result
-    except Exception as error_msg:
-        db.connection.rollback()
-        raise(error_msg)
+        with conn.cursor() as cur:
+            cur.execute(query)
+            result=cur.fetchone()
+            return result
+    except Exception as error:
+        raise Exception(error)
 
-def insert_service(data):
-    db = config.db_connection()
-    search_option = util.make_search_option(data, ['service_name', 'service_url'])
+#서비스 생성
+def insert_service(conn, data):
     try:
-        insert_query = util.make_insert_query('service', data)
-        select_query = 'SELECT @@IDENTITY AS service_id;'
+        query = util.make_insert_query('service', data)
 
-        db.execute(insert_query, param=data)
-        result = db.query_single(select_query, model=service.Service)
-
-        if search_option != '':
-            result = db.execute_scalar(query, param=data)
-        else:
-            result = db.execute_scalar(query)
-        return result
-    except Exception as error_msg:
-        db.connection.rollback()
-        raise(error_msg)
+        with conn.cursor() as cur:
+            cur.execute(query)
+            conn.commit()
+            return cur.lastrowid
+    except Exception as error:
+        conn.rollback()
+        raise Exception(error)
 
 #서비스 정보 수정
-def update_service(target_id, data):
-    db = config.db_connection()
+def update_service(conn, target_id, data):
     update_values = util.make_entity_colums(data)
     try:
         query = f'''
@@ -88,26 +79,24 @@ def update_service(target_id, data):
                 service_id = {target_id};
         '''
 
-        result = db.execute(query, param=data)
-
-        db.connection.commit()
-        return result
-    except Exception as error_msg:
-        db.connection.rollback()
-        raise(error_msg)
+        with conn.cursor() as cur:
+            cur.execute(query)
+            conn.commit()
+    except Exception as error:
+        conn.rollback()
+        raise Exception(error)
 
 #서비스 삭제
-def delete_service(target_id):
-    db = config.db_connection()
+def delete_service(conn, target_id):
     try:
-        query = '''
-            DELETE FROM service WHERE service_id = ?service_id?;
+        query = f'''
+            DELETE FROM service WHERE service_id = '{target_id}';
         '''
         #TODO : 서비스 하위 리소스 및 권한 삭제
-        
-        result = db.execute(query, param={'service_id': target_id})
-        db.connection.commit()
-        return result
-    except Exception as error_msg:
-        db.connection.rollback()
-        raise(error_msg)
+
+        with conn.cursor() as cur:
+            cur.execute(query)
+            conn.commit()
+    except Exception as error:
+        conn.rollback()
+        raise Exception(error)

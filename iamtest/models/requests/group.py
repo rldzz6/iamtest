@@ -5,8 +5,7 @@ class Group(BaseModel):
     group_id: str | None = None
     group_name: str | None = None
     remark: str | None = None
-    search: str | None = None
-    keyword: int | None = None
+    keyword: str | None = None
 
 class Permission(BaseModel):
     group_id: str | None = None
@@ -22,5 +21,21 @@ class Permission(BaseModel):
 
 class Allocation(BaseModel):
     group_id: str | None = None
-    employee_list: str | None = None
-    permission_list: str | None = None
+    employee_list: Any | None = None
+    permission_list: Any | None = None
+
+    @validator('permission_list')
+    def permission_to_list(cls, permission_list):
+        if permission_list == None or permission_list == '':
+            return ''
+        return permission_list.replace(' ', '').split(',')
+    @validator('employee_list')
+    def group_to_list(cls, employee_list):
+        if employee_list == None or employee_list == '':
+            return ''
+        return employee_list.replace(' ', '').split(',')
+
+class User(BaseModel):
+    employee_id: str | None = None
+    permission_id: str | None = None
+    group_id: str | None = None

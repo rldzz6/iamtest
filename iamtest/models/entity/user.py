@@ -1,8 +1,8 @@
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import Dict, Any
 
 class Employee(BaseModel):
     employee_id: str
-    employee_name: str | None = None
-    employee_email: str | None = None
-    rank: str | None = None
+    employee_name: str
+    employee_mail: str | None = None
+    employee_rank: str | None = None
