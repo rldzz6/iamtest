@@ -5,7 +5,6 @@ class Group(BaseModel):
     group_id: int
     group_name: str | None = None
     remark: str | None = None
-    
 
 class Permission(BaseModel):
     group_id: int | None = None
@@ -18,3 +17,4 @@ class Permission(BaseModel):
     permission: int | None = None
     employee_id: str | None = None
     employee_name: str | None = None
+    employee_rank: str | None = None
