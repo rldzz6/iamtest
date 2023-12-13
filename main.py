@@ -15,6 +15,7 @@ app.include_router(service.router, prefix="/services", tags=["service"])
 app.include_router(resource.router, prefix="/resources", tags=["resource"])
 app.include_router(permission.router, prefix="/permissions", tags=["permission"])
 app.include_router(group.router, prefix="/groups", tags=["group"])
+app.include_router(user.router, prefix="/users", tags=["user"])
 
 #테스트 코드
 @app.get('/')

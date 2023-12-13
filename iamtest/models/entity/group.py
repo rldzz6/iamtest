@@ -1,12 +1,12 @@
 from pydantic import BaseModel
-from typing import List
+from typing import NamedTuple
 
-class Group(BaseModel):
+class Group(NamedTuple):
     group_id: int
     group_name: str | None = None
     remark: str | None = None
 
-class Permission(BaseModel):
+class Permission(NamedTuple):
     group_id: int | None = None
     service_id: int | None = None
     service_name: str | None = None
@@ -18,3 +18,7 @@ class Permission(BaseModel):
     employee_id: str | None = None
     employee_name: str | None = None
     employee_rank: str | None = None
+
+class Model(BaseModel):
+    group: Group | None = None
+    permission: Permission | None = None

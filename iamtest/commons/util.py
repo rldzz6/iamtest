@@ -24,31 +24,40 @@ def get_ip():
     out_addr = re.search(r'IP Address : (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})', req.text)[1]
     return out_addr
 
-#로그 저장 (카테고리, 작업내용, 요청파라미터, 성공여부, 사번)
-def log(category, action, request_body, employee_id, remark=''):
-    description = remark
-    if type(request_body) == str:
-        description += str(request_body)
-    else:
-       description += '\n' + str(request_body.dict(exclude_none=True))
+def log_description(basemodel, logmodel):
+    #none값 제거
+    data = basemodel.dict(exclude_none=True)
+    description = ""
+    for key in data:
+        description += logmodel.get(key) + ' : "' + str(data.get(key)).replace("'", "") + '"  '
+    return description
 
-    log = Log()
-    log.category = category
-    log.action = action
-    log.description = description
-    log.action_time = str(datetime.now())
-    log.employee_id = employee_id
-    log.ip = get_ip()
 
+#로그 저장 (카테고리, 작업내용, 요청파라미터, 사번, 비고)
+def log(category, action, description, employee_id, remark=''):
+    if remark:
+        description += '\n' + remark
+
+    #log 모델 생성
+    log = Log(
+        category = category
+        , action = action
+        , description = description
+        , action_time = str(datetime.now())
+        , employee_id = employee_id
+        , ip = get_ip()
+    )
+
+    #log INSERT
     try:
         db = config.db_connection()
-        insert_query = f''' INSERT iam_log ( category, description, action, action_time, employee_id, ip ) 
-                            VALUES ('{log.category}', '{log.description}', '{log.action}', '{log.action_time}', '{log.employee_id}', '{log.ip}' ); '''
-
+        insert_query = make_insert_query('iam_log', log)
+        #insert_query = f''' INSERT iam_log ( category, description, action, action_time, employee_id, ip ) 
+        #                    VALUES ('{log.category}', '{log.description}', '{log.action}', '{log.action_time}', '{log.employee_id}', '{log.ip}' ); '''
        
         with db.cursor() as cur:
             cur.execute(insert_query)
-            result=cur.fetchone()
+            db.commit()
     except Exception as error:
         raise(error)
 
@@ -130,7 +139,7 @@ def make_entity_colums(model:BaseModel):
     for key in model:
         if entity_colums:
             entity_colums += ', '
-        entity_colums += key + "='" + model.get(key) + "'"
+        entity_colums += key + "='" + model.get(key).replace("'","") + "'"
     if not entity_colums:
         raise Exception('쿼리문 생성 오류 : 업데이트 값이 없습니다.')
     return entity_colums
@@ -165,13 +174,11 @@ def get_total_page(total_count, view_count):
         return total_count // view_count + 1
 
 #result data를 response 형태로 변환
-def make_response(data, total_count=1):
-    if len(data) == 0:
-        data = None
-    elif len(data) == 1:
-        data = data[0]
+def make_response(result_data, total_count=1):
+    if len(result_data) == 0:
+        response_data = None
     else:
-        data = data
+        response_data = [data._asdict() for data in result_data]
 
-    response = Response(data=data, total_count=total_count, total_page=get_total_page(total_count, page_unit))
+    response = Response(data=response_data, total_count=total_count, total_page=get_total_page(total_count, page_unit))
     return response

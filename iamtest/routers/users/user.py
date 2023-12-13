@@ -18,9 +18,10 @@ def select_info(request:Request):
     try:
         if not identity:
             raise Exception('사원정보가 없습니다.')
-        result_data = sql.select_info(db, identity)
+        result_data, total_count = sql.select_info(db, identity)
 
-        response = util.make_response(result_data)
+        response = util.make_response(result_data, total_count)
+        logger.info(str(response), extra={'status_code':200}, exc_info=True)
         return response
     except HTTPException as http_error:
         raise http_error

@@ -1,5 +1,5 @@
 from pydantic import BaseModel, validator
-from typing import Dict, Any
+from typing import Dict, Any, NamedTuple
 
 class Permission(BaseModel):
     permission_id: str | None = None
@@ -16,7 +16,7 @@ class Permission(BaseModel):
         if keyword == '':
             return None
 
-class User(BaseModel):
+class User(tuple):
     employee_id: str | None = None
     permission_id: str | None = None
     group_id: str | None = None
@@ -36,3 +36,16 @@ class Allocation(BaseModel):
         if group_list == None or group_list == '':
             return ''
         return group_list.replace(' ', '').split(',')
+        
+class Log(BaseModel):
+    permission_id: str = '권한 ID'
+    service_id: str = '서비스 ID'
+    resource_id: str = '리소스 ID'
+    permission_name: str = '권한명'
+    permission: str = '권한'
+    remark: str = '비고'
+    keyword: str = '검색어'
+    employee_id: str = '사원번호'
+    group_id: str = '권한 ID'
+    permission_list : str = '허용 사원 목록'
+    group_list : str = '권한 그룹 목록'

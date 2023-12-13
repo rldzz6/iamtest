@@ -10,7 +10,11 @@ logger.setLevel(logging.INFO)
 
 def db_connection():
     try:
-        conn = pymysql.connect(host=os.environ['DB_HOST'], user=os.environ['DB_USER'], passwd=os.environ['DB_PASSWORD'], db=os.environ['DB_DATABASE'], connect_timeout=5)
+        DB_HOST='localhost'
+        DB_USER='root'
+        DB_PASSWORD=''
+        DB_DATABASE='sys'
+        conn = pymysql.connect(host=DB_HOST, user=DB_USER, passwd=DB_PASSWORD, db=DB_DATABASE, connect_timeout=5)
         #conn = mysql.connector.connect(host=os.environ.get('DB_HOST'), user=os.environ.get('DB_USER'), passwd=os.environ.get('DB_PASSWORD'), db=os.environ.get('DB_DATABASE'), charset='utf8')
 
         return conn

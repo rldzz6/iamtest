@@ -10,13 +10,13 @@ class Response(BaseModel):
     total_page: int | None = 1
 
 class Log(BaseModel):
-    log_id: int | None = None
-    category: str | None = None
-    description: str | None = None
-    action: str | None = None
-    action_time: str | None = None
-    employee_id: str | None = None
-    ip: str | None = None
+    log_id: int | None = ''
+    category: str | None = ''
+    description: str | None = ''
+    action: str | None = ''
+    action_time: str | None = ''
+    employee_id: str | None = ''
+    ip: str | None = ''
 
 class Errorlog(BaseModel):
     identity: str | None = None

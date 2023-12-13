@@ -4,12 +4,12 @@ from datetime import datetime
 import logging
 from iamtest.commons import util 
 from iamtest.commons import config
-import iamtest.models.querys.resource as sql
-import iamtest.models.requests.resource as RequestDTO
 from iamtest.models.entity.common import Response
-from iamtest.models.entity.common import Errorlog as Errorlog
+import iamtest.models.requests.resource as RequestDTO
+import iamtest.models.querys.resource as sql
 
 router = APIRouter()
+logmodel = RequestDTO.Log()
 category = '리소스 관리'
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -18,15 +18,15 @@ logger.setLevel(logging.INFO)
 #리소스 목록 조회
 @router.get('')
 @router.get('/{resource_id}')
-def select_resource(request:Request, page: int = 0, model: RequestDTO.Resource = Depends()):
+def select_resource(request:Request, model: RequestDTO.Resource = Depends(), page: int = 0):
     identity = request.headers.get("identity")
     db = config.db_connection()
     try:
         result_data = sql.select_resource(db, model, page)
         total_count = sql.select_resource_count(db, model)
-        
-        response = util.make_response(result_data, total_count[0])
-        util.log(category, '리소스 정보 조회', model, identity)
+
+        response = util.make_response(result_data, total_count)
+        util.log(category, '리소스 정보 조회', util.log_description(model, logmodel.dict()), identity)
         return response
     except Exception as error:
         logger.error(str(error), extra={'status_code': 500}, exc_info=True)
@@ -50,7 +50,7 @@ async def insert_resource(request:Request, model: RequestDTO.Resource):
         if not result_data :
             raise Exception('리소스를 생성하는데 실패했습니다.')
 
-        util.log(category, '리소스 생성', model, identity)
+        util.log(category, '리소스 생성', util.log_description(model, logmodel.dict()), identity)
         response = Response(data={"resource_id":result_data}, total_count=1)
         return response
     except Exception as error:
@@ -72,10 +72,10 @@ async def update_service(request:Request, resource_id:str, model: RequestDTO.Res
         if util.is_empty('service_id', model):
             raise Exception('서비스를 찾을 수 없습니다.')
 
-        result = sql.update_resource(db, resource_id, model)
+        result_count = sql.update_resource(db, resource_id, model)
 
-        util.log(category, '리소스 정보 수정', model, identity)
-        response = Response(data={"resource_id" : resource_id})
+        util.log(category, '리소스 정보 수정', util.log_description(model, logmodel.dict()), identity)
+        response = Response(data={"resource_id" : resource_id}, total_count=result_count)
         return response
     except Exception as error:
         logger.error(str(error), extra={'status_code': 500}, exc_info=True)
@@ -95,11 +95,11 @@ async def delete_resource(request:Request, resource_id:str):
     
         result_count = sql.delete_resource(db, resource_id)
 
-        #if result_count == 0:
-        #    raise Exception('리소스를 삭제하는데 실패했습니다.')
+        if result_count == 0:
+            raise Exception('리소스를 삭제하는데 실패했습니다.')
 
-        util.log(category, '리소스 삭제', model, identity)
-        response = Response()
+        util.log(category, '리소스 삭제', util.log_description(model, logmodel.dict()), identity)
+        response = Response(total_count=result_count)
         return response
     except Exception as error:
         logger.error(str(error), extra={'status_code': 500}, exc_info=True)

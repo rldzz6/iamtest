@@ -2,6 +2,7 @@ from io import StringIO
 from iamtest.commons import util
 from iamtest.commons import config
 from iamtest.models.entity import user
+import iamtest.models.entity.user as Entity
 
 def select_info(conn, target_id):
     try:
@@ -14,13 +15,12 @@ def select_info(conn, target_id):
             FROM
                 employee
             WHERE
-                id = {target_id};
+                employee_id = '{target_id}';
         '''
 
         with conn.cursor() as cur:
             cur.execute(query)
-            columns = cur.description
-            result = [{columns[index][0]:column for index, column in enumerate(value)} for value in cur.fetchall()]
-            return result
+            result = [Entity.Model(data=data).data for data in cur.fetchall()]
+            return result, cur.rowcount
     except Exception as error:
         raise Exception(error)

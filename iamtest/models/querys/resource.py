@@ -1,7 +1,7 @@
 from io import StringIO
 from iamtest.commons import util
 from iamtest.commons import config
-from iamtest.models.entity import resource
+import iamtest.models.entity.resource as Entity
 
 #리소스 목록 조회
 def select_resource(conn, data, page_no):
@@ -20,19 +20,18 @@ def select_resource(conn, data, page_no):
                 1 = 1
         '''
         if util.is_value('resource_id', data) and data.resource_id:
-            query += " AND A.resource_id = '{}'".format(data.resource_id)
+            query += " AND A.resource_id = '{resource_id}'".format(resource_id=data.resource_id)
         if util.is_value('service_id', data) and data.service_id:
-            query += " AND A.service_id = '{}'".format(data.service_id)
+            query += " AND A.service_id = '{service_id}'".format(service_id=data.service_id)
         if util.is_value('resource_name', data) and data.resource_name:
-            query += " AND A.resource_name = '{}'".format(data.resource_name)
+            query += " AND A.resource_name = '{resource_name}'".format(resource_name=data.resource_name)
         if util.is_value('keyword', data) and data.keyword:
             query += " AND (LOCATE('{keyword}', A.resource_name) > 0  OR  LOCATE('{keyword}', A.remark) > 0 ) ".format(keyword = data.keyword)
         query += util.pagination(page_no)
 
         with conn.cursor() as cur:
             cur.execute(query)
-            columns = cur.description
-            result = [{columns[index][0]:column for index, column in enumerate(value)} for value in cur.fetchall()]
+            result = [Entity.Model(data=data).data for data in cur.fetchall()]
             return result
     except Exception as error:
         raise Exception(error)
@@ -50,18 +49,18 @@ def select_resource_count(conn, data):
                 1 = 1
         '''
         if util.is_value('resource_id', data) and data.resource_id:
-            query += " AND A.resource_id = '{}'".format(data.resource_id)
+            query += " AND A.resource_id = '{resource_id}'".format(resource_id=data.resource_id)
         if util.is_value('service_id', data) and data.service_id:
-            query += " AND A.service_id = '{}'".format(data.service_id)
+            query += " AND A.service_id = '{service_id}'".format(service_id=data.service_id)
         if util.is_value('resource_name', data) and data.resource_name:
-            query += " AND A.resource_name = '{}'".format(data.resource_name)
+            query += " AND A.resource_name = '{resource_name}'".format(resource_name=data.resource_name)
         if util.is_value('keyword', data) and data.keyword:
             query += " AND (LOCATE('{keyword}', A.resource_name) > 0  OR  LOCATE('{keyword}', A.remark) > 0 ) ".format(keyword = data.keyword)
 
         with conn.cursor() as cur:
             cur.execute(query)
             result=cur.fetchone()
-            return result
+            return result[0]
     except Exception as error:
         raise Exception(error)
 
@@ -76,10 +75,10 @@ def insert_resource(conn, data):
             return cur.lastrowid
     except Exception as error:
         conn.rollback()
-        raise Exception(error)
+        raise Exception('쿼리 실행 오류 : ' + str(error))
 
 #리소스 정보 수정
-def update_resource(conn, target_id, data):
+def update_resource(conn, resource_id, data):
     update_values = util.make_entity_colums(data)
     try:
         query = f'''
@@ -88,27 +87,29 @@ def update_resource(conn, target_id, data):
             SET 
                 {update_values}
             WHERE
-                resource_id = {target_id};
+                resource_id = '{resource_id}';
         '''
 
         with conn.cursor() as cur:
             cur.execute(query)
             conn.commit()
+            return cur.rowcount
     except Exception as error:
         conn.rollback()
-        raise Exception(error)
+        raise Exception('쿼리 실행 오류 : ' + str(error))
 
 #리소스 삭제
-def delete_resource(conn, target_id):
+def delete_resource(conn, resource_id):
     try:
-        query = f'''
-            DELETE FROM resource WHERE resource_id = '{target_id}';
-        '''
-        #TODO : 리소스 하위 권한 삭제
+        #리소스와 하위 권한 일괄 삭제
+        query_resource = f"DELETE FROM resource WHERE resource_id = '{resource_id}';"
+        quesry_permission = f"DELETE FROM permission WHERE resource_id = '{resource_id}';"
         
         with conn.cursor() as cur:
-            cur.execute(query)
+            cur.execute(quesry_permission)
+            cur.execute(query_resource)
             conn.commit()
+            return cur.rowcount
     except Exception as error:
         conn.rollback()
-        raise Exception(error)
+        raise Exception('쿼리 실행 오류 : ' + str(error))

@@ -1,7 +1,7 @@
 from io import StringIO
 from iamtest.commons import util
 from iamtest.commons import config
-from iamtest.models.entity import permission
+import iamtest.models.entity.permission as Entity
 
 #권한 정보 조회
 def select_permission(conn, data, page_no):
@@ -37,8 +37,7 @@ def select_permission(conn, data, page_no):
 
         with conn.cursor() as cur:
             cur.execute(query)
-            columns = cur.description
-            result = [{columns[index][0]:column for index, column in enumerate(value)} for value in cur.fetchall()]
+            result = [Entity.Model(permission=data).permission for data in cur.fetchall()]
             return result
     except Exception as error:
         raise Exception(error)
@@ -70,7 +69,7 @@ def select_permission_count(conn, data):
         with conn.cursor() as cur:
             cur.execute(query)
             result=cur.fetchone()
-            return result
+            return result[0]
     except Exception as error:
         raise Exception(error)
 
@@ -85,7 +84,7 @@ def insert_permission(conn, data):
             return cur.lastrowid
     except Exception as error:
         conn.rollback()
-        raise Exception(error)
+        raise Exception('쿼리 실행 오류 : ' + str(error))
 
 #권한 정보 수정
 def update_permission(conn, target_id, data):
@@ -99,29 +98,32 @@ def update_permission(conn, target_id, data):
             WHERE
                 permission_id = '{target_id}';
         '''
-
         with conn.cursor() as cur:
             cur.execute(query)
             conn.commit()
+            return cur.rowcount
     except Exception as error:
         conn.rollback()
-        raise Exception(error)
-
+        raise Exception('쿼리 실행 오류 : ' + str(error))
 
 #권한 삭제
-def delete_permission(conn, target_id):
+def delete_permission(conn, permission_id):
     try:
-        query = f'''
-            DELETE FROM permission WHERE permission_id = '{target_id}';
-        '''
-        #TODO : 할당되어있는 권한정보 삭제(user_permission, group_permission)
+        #할당되어있는 권한정보도 모두 삭제(permission, user_permission, group_permission)
+        query_user_permission = f"DELETE FROM group_permission WHERE permission_id = '{permission_id}'";
+        query_group_permission = f"DELETE FROM user_permission WHERE permission_id = '{permission_id}';"
+        quesry_permission = f"DELETE FROM permission WHERE permission_id = '{permission_id}';"
+
 
         with conn.cursor() as cur:
-            cur.execute(query)
+            cur.execute(query_user_permission)
+            cur.execute(query_group_permission)
+            cur.execute(quesry_permission)
             conn.commit()
+            return cur.rowcount
     except Exception as error:
         conn.rollback()
-        raise Exception(error)
+        raise Exception('쿼리 실행 오류 : ' + str(error))
 
 def select_user(conn, data, page_no = 0):
     try:
@@ -157,14 +159,13 @@ def select_user(conn, data, page_no = 0):
         if util.is_value('employee_id', data) and data.employee_id:
             query += " AND (A.employee_id = '{employee_id}') ".format(employee_id = data.employee_id)
         query += util.pagination(page_no)     
-                   
+                
         with conn.cursor() as cur:
             cur.execute(query)
-            columns = cur.description
-            result = [{columns[index][0]:column for index, column in enumerate(value)} for value in cur.fetchall()]
+            result = [Entity.Model(user=data).user for data in cur.fetchall()]
             return result
     except Exception as error:
-        raise Exception(error)
+        raise Exception('쿼리 실행 오류(1) : ' + str(error))
 
 def select_user_count(conn, data):
     try:
@@ -191,41 +192,39 @@ def select_user_count(conn, data):
 
         with conn.cursor() as cur:
             cur.execute(query)
-            columns = cur.description
-            result = [{columns[index][0]:column for index, column in enumerate(value)} for value in cur.fetchall()]
-            return result
+            result=cur.fetchone()
+            return result[0]
     except Exception as error:
-        raise Exception(error)
-
+        raise Exception('쿼리 실행 오류(2) : ' + str(error))
 
 #사원에게 권한 할당 (권한 또는 권한그룹)
 def allocation_user_permission(conn, data):
-    db = config.db_connection()
     try:
-        query = f'''
-            INSERT INTO user_permission (employee_id, permission_id, group_id) 
-            VALUES ('{data.employee_id}', '{data.permission_id}', '{data.group_id}')
-        '''
+        #query = util.make_insert_query('user_permission', data)
+        query = "INSERT INTO user_permission (employee_id, permission_id, group_id) VALUES (%s, %s, %s) "
 
         with conn.cursor() as cur:
-            cur.execute(query)
+            cur.executemany(query, data)
             conn.commit()
-            return cur.lastrowid
+            print(cur.rowcount)
+            return cur.rowcount
     except Exception as error:
         conn.rollback()
-        raise Exception(error)
+        raise Exception('쿼리 실행 오류 (allocation_user_permission) : ' + str(error))
 
 #사원에게 할당된 권한 또는 권한그룹 제거
 def clear_user_permission(conn, data):
     try:
-        query = f'''
-            DELETE FROM user_permission WHERE employee_id = '{data.employee_id}'
-            AND ('{data.group_id}' <> '' AND NULLIF(group_id, '') = '{data.group_id}') AND ('{data.permission_id}' <> '' AND NULLIF(permission_id, '') = '{data.permission_id}')
+        query = '''
+            DELETE FROM user_permission WHERE employee_id = %s
+            AND (NULLIF(permission_id, '') <> '' AND NULLIF(permission_id, '') = %s AND (NULLIF(group_id, '') <> '' AND NULLIF(group_id, '') = %s))
         '''
 
         with conn.cursor() as cur:
-            cur.execute(query)
+            cur.executemany(query, data)
             conn.commit()
+            print(cur.rowcount)
+            return cur.rowcount
     except Exception as error:
         conn.rollback()
-        raise Exception(error)
+        raise Exception('쿼리 실행 오류 (clear_user_permission) : ' + str(error))
