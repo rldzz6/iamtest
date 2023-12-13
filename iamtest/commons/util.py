@@ -7,10 +7,10 @@ from datetime import datetime
 import logging
 from pydantic import BaseModel
 from datetime import datetime
-from iamtest.commons import config
-from iamtest.models.entity.common import Log
-from iamtest.models.entity.common import Response
-from iamtest.models.entity.common import Errorlog
+from didimiam.commons import config
+from didimiam.models.entity.common import Log
+from didimiam.models.entity.common import Response
+from didimiam.models.entity.common import Errorlog
 
 page_unit = 20
 
@@ -28,9 +28,9 @@ def get_ip():
 def log(category, action, request_body, employee_id, remark=''):
     description = remark
     if type(request_body) == str:
-        description = '\n' + str(request_body)
+        description += str(request_body)
     else:
-        description = '\n' + str(request_body.dict(exclude_none=True))
+       description += '\n' + str(request_body.dict(exclude_none=True))
 
     log = Log()
     log.category = category
@@ -42,13 +42,15 @@ def log(category, action, request_body, employee_id, remark=''):
 
     try:
         db = config.db_connection()
-        insert_query = make_insert_query('iam_log', log)
+        insert_query = f''' INSERT iam_log ( category, description, action, action_time, employee_id, ip ) 
+                            VALUES ('{log.category}', '{log.description}', '{log.action}', '{log.action_time}', '{log.employee_id}', '{log.ip}' ); '''
 
-        db.execute(insert_query, param=log)
-        db.connection.commit()
-    except Exception as error_msg:
-        db.connection.rollback()
-        raise('로그 생성 실패 : ' + str(error_msg))
+       
+        with db.cursor() as cur:
+            cur.execute(insert_query)
+            result=cur.fetchone()
+    except Exception as error:
+        raise(error)
 
 #에러 로그 생성
 def exception_log(request: Request, exc: Exception, status: int = 500):
@@ -70,7 +72,7 @@ def make_insert_query(table:str, model:BaseModel):
                 columns += ', '
                 values += ', '
             columns += key
-            values += '?' + key + '?'
+            values += "'" + model.get(key) + "'"
         
         if not columns or not values:
             raise Exception('쿼리문 생성 오류')
@@ -114,6 +116,7 @@ def make_search_option(model, search_options):
 
 #SELECT문 pagination옵션 생성 (페이지번호, 출력갯수)
 def pagination(page):
+    page -= 1
     # page_no = -1인 경우 전체 리스트 호출
     if page == -1:
         return ';'
@@ -127,7 +130,7 @@ def make_entity_colums(model:BaseModel):
     for key in model:
         if entity_colums:
             entity_colums += ', '
-        entity_colums += key + '=?' + key + '?'
+        entity_colums += key + "='" + model.get(key) + "'"
     if not entity_colums:
         raise Exception('쿼리문 생성 오류 : 업데이트 값이 없습니다.')
     return entity_colums
@@ -162,13 +165,13 @@ def get_total_page(total_count, view_count):
         return total_count // view_count + 1
 
 #result data를 response 형태로 변환
-def make_response(data, total_count):
+def make_response(data, total_count=1):
     if len(data) == 0:
         data = None
     elif len(data) == 1:
-        data = data[0].dict()
+        data = data[0]
     else:
-        data = [dict(data) for data in data]
+        data = data
 
     response = Response(data=data, total_count=total_count, total_page=get_total_page(total_count, page_unit))
     return response
