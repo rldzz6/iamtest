@@ -1,28 +1,26 @@
 from io import StringIO
 from iamtest.commons import util
-import iamtest.commons.config as config
+from iamtest.commons import config
 from iamtest.models.entity import user
 
-def select_info(target_id):
-    db = config.db_connection()
-    
+def select_info(conn, target_id):
     try:
         query = f'''
             SELECT
-                id AS employee_id
+                employee_id
                 , employee_name
-                , employee_email
-                , `rank`
+                , employee_mail
+                , employee_rank
             FROM
                 employee
             WHERE
-                id = ?employee_id?
-        ''' 
+                id = {target_id};
+        '''
 
-        result = db.query(query, param={'employee_id' : target_id}, model=user.Employee)
-        
-        db.connection.commit()
-        return result
-    except Exception as error_msg:
-        db.connection.rollback()
-        raise(error_msg)
+        with conn.cursor() as cur:
+            cur.execute(query)
+            columns = cur.description
+            result = [{columns[index][0]:column for index, column in enumerate(value)} for value in cur.fetchall()]
+            return result
+    except Exception as error:
+        raise Exception(error)

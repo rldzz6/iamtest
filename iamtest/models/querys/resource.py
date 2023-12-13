@@ -4,77 +4,82 @@ from iamtest.commons import config
 from iamtest.models.entity import resource
 
 #리소스 목록 조회
-def select_resource(data, page_no):
-    db = config.db_connection()
-    search_option = util.make_search_option(data, ['resource_name', 'remark'])
+def select_resource(conn, data, page_no):
     try:
         query = f'''
             SELECT
-                resource_id
-                , service_id
-                , resource_name
-                , remark
+                A.resource_id
+                , A.resource_name
+                , A.remark
+                , B.service_id
+                , B.service_name
             FROM
-                resource
+                resource A
+                JOIN service B ON A.service_id = B.service_id
             WHERE
                 1 = 1
-        ''' 
-        query += search_option
-        query += util.pagination(page_no)      
+        '''
+        if util.is_value('resource_id', data) and data.resource_id:
+            query += " AND A.resource_id = '{}'".format(data.resource_id)
+        if util.is_value('service_id', data) and data.service_id:
+            query += " AND A.service_id = '{}'".format(data.service_id)
+        if util.is_value('resource_name', data) and data.resource_name:
+            query += " AND A.resource_name = '{}'".format(data.resource_name)
+        if util.is_value('keyword', data) and data.keyword:
+            query += " AND (LOCATE('{keyword}', A.resource_name) > 0  OR  LOCATE('{keyword}', A.remark) > 0 ) ".format(keyword = data.keyword)
+        query += util.pagination(page_no)
 
-        if search_option != '':
-            result = db.query(query, param=data, model=resource.Resource)
-        else:
-            result = db.query(query, model=resource.Resource)
-        db.connection.commit()
-        return result
-    except Exception as error_msg:
-        db.connection.rollback()
-        raise(error_msg)
+        with conn.cursor() as cur:
+            cur.execute(query)
+            columns = cur.description
+            result = [{columns[index][0]:column for index, column in enumerate(value)} for value in cur.fetchall()]
+            return result
+    except Exception as error:
+        raise Exception(error)
 
 #리소스 전체 갯수 조회
-def select_resource_count(data):
-    db = config.db_connection()
-    search_option = util.make_search_option(data, ['resource_name', 'remark'])
+def select_resource_count(conn, data):
     try:
         query = f'''
             SELECT
                 COUNT(*) AS count
             FROM
-                resource
+                resource A
+                JOIN service B ON A.service_id = B.service_id
             WHERE
                 1 = 1
-        ''' 
-        query += search_option
+        '''
+        if util.is_value('resource_id', data) and data.resource_id:
+            query += " AND A.resource_id = '{}'".format(data.resource_id)
+        if util.is_value('service_id', data) and data.service_id:
+            query += " AND A.service_id = '{}'".format(data.service_id)
+        if util.is_value('resource_name', data) and data.resource_name:
+            query += " AND A.resource_name = '{}'".format(data.resource_name)
+        if util.is_value('keyword', data) and data.keyword:
+            query += " AND (LOCATE('{keyword}', A.resource_name) > 0  OR  LOCATE('{keyword}', A.remark) > 0 ) ".format(keyword = data.keyword)
 
-        if search_option != '':
-            result = db.execute_scalar(query, param=data)
-        else:
-            result = db.execute_scalar(query)
-        return result
-    except Exception as error_msg:
-        db.connection.rollback()
-        raise(error_msg)
+        with conn.cursor() as cur:
+            cur.execute(query)
+            result=cur.fetchone()
+            return result
+    except Exception as error:
+        raise Exception(error)
 
 #리소스 생성
-def insert_resource(data):
-    db = config.db_connection()
+def insert_resource(conn, data):
     try:
-        insert_query = util.make_insert_query('resource', data)
-        select_query = 'SELECT @@IDENTITY AS resource_id;'
+        query = util.make_insert_query('resource', data)
 
-        db.execute(insert_query, param=data)
-        result = db.query_single(select_query, model=resource.Resource)
-
-        db.connection.commit()
-        return result
-    except Exception as error_msg:
-        db.connection.rollback()
-        raise(error_msg)
+        with conn.cursor() as cur:
+            cur.execute(query)
+            conn.commit()
+            return cur.lastrowid
+    except Exception as error:
+        conn.rollback()
+        raise Exception(error)
 
 #리소스 정보 수정
-def update_resource(target_id, data):
-    db = config.db_connection()
+def update_resource(conn, target_id, data):
     update_values = util.make_entity_colums(data)
     try:
         query = f'''
@@ -85,27 +90,25 @@ def update_resource(target_id, data):
             WHERE
                 resource_id = {target_id};
         '''
-        
-        result = db.execute(query, param=data)
 
-        db.connection.commit()
-        return result
-    except Exception as error_msg:
-        db.connection.rollback()
-        raise(error_msg)
+        with conn.cursor() as cur:
+            cur.execute(query)
+            conn.commit()
+    except Exception as error:
+        conn.rollback()
+        raise Exception(error)
 
 #리소스 삭제
-def delete_resource(target_id):
-    db = config.db_connection()
+def delete_resource(conn, target_id):
     try:
-        query = '''
-            DELETE FROM resource WHERE resource_id = ?resource_id?;
+        query = f'''
+            DELETE FROM resource WHERE resource_id = '{target_id}';
         '''
         #TODO : 리소스 하위 권한 삭제
         
-        result = db.execute(query, param={'resource_id': target_id})
-        db.connection.commit()
-        return result
-    except Exception as error_msg:
-        db.connection.rollback()
-        raise(error_msg)
+        with conn.cursor() as cur:
+            cur.execute(query)
+            conn.commit()
+    except Exception as error:
+        conn.rollback()
+        raise Exception(error)

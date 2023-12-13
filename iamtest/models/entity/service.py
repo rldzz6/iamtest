@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import Dict, Any, List
 
 class Service(BaseModel):
     service_id: int

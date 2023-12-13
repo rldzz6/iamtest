@@ -1,22 +1,31 @@
 from fastapi import APIRouter, HTTPException, Header, Request
 from typing import Dict, Any, Union
-from iamtest.commons import util 
+import logging
+from iamtest.commons import util
+from iamtest.commons import config
 import iamtest.models.querys.user as sql
 from iamtest.models.entity.common import Response
 
 router = APIRouter()
 
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
 @router.get('')
 def select_info(request:Request):
     identity = request.headers.get("identity") #header의 사번
+    db = config.db_connection()
     try:
         if not identity:
             raise Exception('사원정보가 없습니다.')
-        result_data = sql.select_info(identity)
+        result_data = sql.select_info(db, identity)
 
-        response = Response(data=result_data.dict())
+        response = util.make_response(result_data)
         return response
+    except HTTPException as http_error:
+        raise http_error
     except Exception as error:
-        status_code = 400
-        response = util.exception_log(request=request, exc=error, status=status_code)
-        raise HTTPException(status_code=status_code, detail=response.dict())
+        logger.error(str(error), extra={'status_code': 500}, exc_info=True)
+        raise HTTPException(status_code=500, detail=(Response(code='', message=str(error))).dict())
+    finally:
+        db.close()
